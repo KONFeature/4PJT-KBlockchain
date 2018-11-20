@@ -32,6 +32,7 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 
 * **IDE** IntellijIDEA
 * **Example BlockChain in Java** [csaguil - P2P BlockChain](https://github.com/csaguil/p2p-blockchain)
+* **Complete BlockChain in Java** [bitcoinJ](https://bitcoinj.github.io)
 * **Complete Blockchain in Kotlin** [Corda](https://github.com/corda/corda)
 
 ## Regle de dev
