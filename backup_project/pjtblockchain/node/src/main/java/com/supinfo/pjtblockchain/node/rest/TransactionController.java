@@ -1,0 +1,63 @@
+package com.supinfo.pjtblockchain.node.rest;
+
+
+import com.supinfo.pjtblockchain.node.service.NodeService;
+import com.supinfo.pjtblockchain.node.service.TransactionService;
+import com.supinfo.pjtblockchain.common.domain.Transaction;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.Set;
+
+@Slf4j
+@RestController
+@RequestMapping("transaction")
+public class TransactionController {
+
+    private final TransactionService transactionService;
+    private final NodeService nodeService;
+
+    @Autowired
+    public TransactionController(TransactionService transactionService, NodeService nodeService) {
+        this.transactionService = transactionService;
+        this.nodeService = nodeService;
+    }
+
+    /**
+     * Retrieve all Transactions, which aren't in a block yet
+     * @return JSON list of Transactions
+     */
+    @RequestMapping
+    Set<Transaction> getTransactionPool() {
+        return transactionService.getTransactionPool();
+    }
+
+
+    /**
+     * Add a new Transaction to the pool.
+     * It is expected that the transaction has a valid signature and the correct hash.
+     *
+     * @param transaction the Transaction to add
+     * @param publish if true, this Node is going to inform all other Nodes about the new Transaction
+     * @param response Status Code 202 if Transaction accepted, 406 if verification fails
+     */
+    @RequestMapping(method = RequestMethod.PUT)
+    void addTransaction(@RequestBody Transaction transaction, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
+        log.info("Add transaction " + Base64.encodeBase64String(transaction.getHash()));
+        boolean success = transactionService.add(transaction);
+
+        if (success) {
+            response.setStatus(HttpServletResponse.SC_ACCEPTED);
+
+            if (publish != null && publish) {
+                nodeService.broadcastPut("transaction", transaction);
+            }
+        } else {
+            response.setStatus(HttpServletResponse.SC_NOT_ACCEPTABLE);
+        }
+    }
+
+}
