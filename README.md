@@ -39,3 +39,12 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 
 * Code en Anglais
 * Commentaire en Francais
+
+## Idée
+
+* **KTor** Kotlin library to create Back Office [Link](https://ktor.io/)
+* **Koin** Kotlin library for dependency injection [Link](https://github.com/InsertKoinIO/koin)
+* **Exposed** Kotlin library for SQL [Link](https://github.com/jetbrains/Exposed)
+* **Dokka** Kotlin library to create documentation [Link](https://github.com/Kotlin/dokka)
+* **Awesome Kotlin** Kotlin ressources list [Link](https://github.com/KotlinBy/awesome-kotlin)
+
