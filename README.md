@@ -12,11 +12,12 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 
 ### BockChain
 
-* Java / Kotlin ?
+* Java server
 
 ### Wallet
 
-* Script Bash / Cmd qui interagie avec la blockchain
+* CLI java app (.jar)
+* Script Bash / Cmd qui interagie avec le jar
 
 ### Front
 
@@ -24,7 +25,7 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 
 ### BO
 
-* Java / Kotlin ? 
+* Java server 
 
 ## Infra 
 
@@ -47,4 +48,6 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 * **Exposed** Kotlin library for SQL [Link](https://github.com/jetbrains/Exposed)
 * **Dokka** Kotlin library to create documentation [Link](https://github.com/Kotlin/dokka)
 * **Awesome Kotlin** Kotlin ressources list [Link](https://github.com/KotlinBy/awesome-kotlin)
+* **Awesome Java** Java ressources list [Link](https://github.com/akullpp/awesome-java)
+* **Awesome JavaEE8** Java ressources list [Link](https://github.com/hantsy/awesome-javaee8)
 
