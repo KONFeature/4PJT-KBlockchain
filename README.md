@@ -2,44 +2,50 @@
 
 Création d'une blockchain, avec un wallet en ligne de commande et une interface web permettant de connaitre l'état de la blockchain.
 
+## Utilisation
+### Compilation
+```shell
+cd pjtblockchain
+./mvnw package
+```
+### Lancement d'un noeud
+```shell
+java -jar pjtblockchain/node/target/node-0.0.1-SNAPSHOT.jar
+```
+### Interaction avec la blockchain
+```shell
+java -jar pjtblockchain/client/target/client-0.0.1-SNAPSHOT.jar --help
+```
+
 ## Changelog
-
+### Version 0.0.1
+* Creation projet de base de blockchain et wallet
 ### Version 0.0.0
-
 * Git init
 
 ## Languages utilisés
-
 ### BockChain
-
-* Java server
+* Java server (Spring)
 
 ### Wallet
-
 * CLI java app (.jar)
-* Script Bash / Cmd qui interagie avec le jar
+* Script Bash / Cmd qui lance le jar
 
 ### Front
-
 * Angular ? 
 
 ### BO
-
-* Java server 
+* Java server (Spring)
 
 ## Infra 
+* Tomcat8 (Inclus dans spring boot)
 
 ## Reference
-
 * **IDE** IntellijIDEA
 * **Example BlockChain in Java** [csaguil - P2P BlockChain](https://github.com/csaguil/p2p-blockchain)
-* **Complete BlockChain in Java** [bitcoinJ](https://bitcoinj.github.io)
-* **Complete Blockchain in Kotlin** [Corda](https://github.com/corda/corda)
 
 ## Regle de dev
-
-* Code en Anglais
-* Commentaire en Francais
+* Code et commentaire en Anglais
 
 ## Idée
 
