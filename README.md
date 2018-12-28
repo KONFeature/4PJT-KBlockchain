@@ -43,8 +43,9 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 * **IDE** IntellijIDEA
 * **Example BlockChain in Java** [csaguil - P2P BlockChain](https://github.com/csaguil/p2p-blockchain)
 
-## Regle de dev
+## Regle du projet
 * Code et commentaire en Anglais
+* Developement agile en suivant cette methode [Link](https://blog.elao.com/fr/methodo/gestion-projet-agile-github/)
 
 ## Idée
 
