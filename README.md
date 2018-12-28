@@ -56,4 +56,6 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 * **Awesome Java** Java ressources list [Link](https://github.com/akullpp/awesome-java)
 * **Awesome JavaEE8** Java ressources list [Link](https://github.com/hantsy/awesome-javaee8)
 * **Meilleur implementation** [Link](https://blockchainconf.net/blog/java/blockchain-java-developers-build-blockchain-java/)
+* **Atomix** Assure l'integrité de la haute dispo meme si grand nombre de node [Link](https://github.com/atomix/atomix)
+* **jReto** Assure une meilleur scalabilité du p2p que les sockets de base [Link](https://github.com/ls1intum/jReto)
 
