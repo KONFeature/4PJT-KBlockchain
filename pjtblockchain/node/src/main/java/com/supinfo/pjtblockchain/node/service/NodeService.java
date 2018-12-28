@@ -3,8 +3,7 @@ package com.supinfo.pjtblockchain.node.service;
 
 import com.supinfo.pjtblockchain.common.domain.Node;
 import com.supinfo.pjtblockchain.node.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationListener;
@@ -18,11 +17,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-
+@Slf4j
 @Service
 public class NodeService implements ApplicationListener<WebServerInitializedEvent> {
-
-    private final static Logger LOG = LoggerFactory.getLogger(NodeService.class);
 
     private final BlockService blockService;
     private final TransactionService transactionService;
@@ -58,11 +55,11 @@ public class NodeService implements ApplicationListener<WebServerInitializedEven
         int port = webServerInitializedEvent.getWebServer().getPort();
 
         self = getSelfNode(host, port);
-        LOG.info("Self address: " + self.getAddress());
+        log.info("Self address: " + self.getAddress());
 
         // download data if necessary
         if (self.equals(masterNode)) {
-            LOG.info("Running as master node, nothing to init");
+            log.info("Running as master node, nothing to init");
         } else {
             knownNodes.add(masterNode);
 
@@ -82,9 +79,9 @@ public class NodeService implements ApplicationListener<WebServerInitializedEven
      */
     @PreDestroy
     public void shutdown() {
-        LOG.info("Shutting down");
+        log.info("Shutting down");
         broadcastPost("node/remove", self);
-        LOG.info(knownNodes.size() + " informed");
+        log.info(knownNodes.size() + " informed");
     }
 
 
@@ -126,7 +123,7 @@ public class NodeService implements ApplicationListener<WebServerInitializedEven
     public void retrieveKnownNodes(Node node, RestTemplate restTemplate) {
         Node[] nodes = restTemplate.getForObject(node.getAddress() + "/node", Node[].class);
         Collections.addAll(knownNodes, nodes);
-        LOG.info("Retrieved " + nodes.length + " nodes from node " + node.getAddress());
+        log.info("Retrieved " + nodes.length + " nodes from node " + node.getAddress());
     }
 
     private String retrieveSelfExternalHost(Node node, RestTemplate restTemplate) {
@@ -137,7 +134,7 @@ public class NodeService implements ApplicationListener<WebServerInitializedEven
         try {
             return new Node(new URL("http", host, port, ""));
         } catch (MalformedURLException e) {
-            LOG.error("Invalid self URL", e);
+            log.error("Invalid self URL", e);
             return new Node();
         }
     }
@@ -146,7 +143,7 @@ public class NodeService implements ApplicationListener<WebServerInitializedEven
         try {
             return new Node(new URL(Config.MASTER_NODE_ADDRESS));
         } catch (MalformedURLException e) {
-            LOG.error("Invalid master node URL", e);
+            log.error("Invalid master node URL", e);
             return new Node();
         }
     }

@@ -3,8 +3,7 @@ package com.supinfo.pjtblockchain.node.rest;
 
 import com.supinfo.pjtblockchain.node.service.NodeService;
 import com.supinfo.pjtblockchain.common.domain.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,12 +13,10 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Set;
 
-
+@Slf4j
 @RestController
 @RequestMapping("node")
 public class NodeController {
-
-    private final static Logger LOG = LoggerFactory.getLogger(NodeController.class);
 
     private final NodeService nodeService;
 
@@ -43,7 +40,7 @@ public class NodeController {
      */
     @RequestMapping(method = RequestMethod.PUT)
     void addNode(@RequestBody Node node) {
-        LOG.info("Add node " + node.getAddress());
+        log.info("Add node " + node.getAddress());
         nodeService.add(node);
     }
 
@@ -53,7 +50,7 @@ public class NodeController {
      */
     @RequestMapping(path = "remove", method = RequestMethod.POST)
     void removeNode(@RequestBody Node node) {
-        LOG.info("Remove node " + node.getAddress());
+        log.info("Remove node " + node.getAddress());
         nodeService.remove(node);
     }
 

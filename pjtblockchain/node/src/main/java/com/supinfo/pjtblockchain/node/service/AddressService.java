@@ -3,9 +3,8 @@ package com.supinfo.pjtblockchain.node.service;
 
 import com.supinfo.pjtblockchain.common.domain.Address;
 import com.supinfo.pjtblockchain.common.domain.Node;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -14,11 +13,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-
+@Slf4j
 @Service
 public class AddressService {
-
-    private final static Logger LOG = LoggerFactory.getLogger(AddressService.class);
 
     /**
      * Mapping of Address hash -> Address object
@@ -58,6 +55,6 @@ public class AddressService {
     public void retrieveAddresses(Node node, RestTemplate restTemplate) {
         Address[] addresses = restTemplate.getForObject(node.getAddress() + "/address", Address[].class);
         Arrays.asList(addresses).forEach(this::add);
-        LOG.info("Retrieved " + addresses.length + " addresses from node " + node.getAddress());
+        log.info("Retrieved " + addresses.length + " addresses from node " + node.getAddress());
     }
 }

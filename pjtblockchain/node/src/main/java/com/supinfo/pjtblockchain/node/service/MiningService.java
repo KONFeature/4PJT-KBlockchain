@@ -4,8 +4,7 @@ package com.supinfo.pjtblockchain.node.service;
 import com.supinfo.pjtblockchain.common.domain.Block;
 import com.supinfo.pjtblockchain.common.domain.Transaction;
 import com.supinfo.pjtblockchain.node.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +12,9 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class MiningService implements Runnable {
-
-    private final static Logger LOG = LoggerFactory.getLogger(MiningService.class);
 
     private final TransactionService transactionService;
     private final NodeService nodeService;
@@ -37,7 +35,7 @@ public class MiningService implements Runnable {
      */
     public void startMiner() {
         if (runMiner.compareAndSet(false, true)) {
-            LOG.info("Starting miner");
+            log.info("Starting miner");
             Thread thread = new Thread(this);
             thread.start();
         }
@@ -47,7 +45,7 @@ public class MiningService implements Runnable {
      * Stop the miner after next iteration
      */
     public void stopMiner() {
-        LOG.info("Stopping miner");
+        log.info("Stopping miner");
         runMiner.set(false);
     }
 
@@ -60,12 +58,12 @@ public class MiningService implements Runnable {
             Block block = mineBlock();
             if (block != null) {
                 // Found block! Append and publish
-                LOG.info("Mined block with " + block.getTransactions().size() + " transactions and nonce " + block.getTries());
+                log.info("Mined block with " + block.getTransactions().size() + " transactions and nonce " + block.getTries());
                 blockService.append(block);
                 nodeService.broadcastPut("block", block);
             }
         }
-        LOG.info("Miner stopped");
+        log.info("Miner stopped");
     }
 
     private Block mineBlock() {
@@ -78,11 +76,11 @@ public class MiningService implements Runnable {
 
         // sleep if no more transactions left
         if (transactions.isEmpty()) {
-            LOG.info("No transactions available, pausing");
+            log.info("No transactions available, pausing");
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
-                LOG.error("Thread interrupted", e);
+                log.error("Thread interrupted", e);
             }
             return null;
         }

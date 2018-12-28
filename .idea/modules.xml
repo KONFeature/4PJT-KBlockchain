@@ -3,6 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/4-PJT-master.iml" filepath="$PROJECT_DIR$/.idea/4-PJT-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/pjtblockchain/client/client.iml" filepath="$PROJECT_DIR$/pjtblockchain/client/client.iml" />
+      <module fileurl="file://$PROJECT_DIR$/pjtblockchain/common/common.iml" filepath="$PROJECT_DIR$/pjtblockchain/common/common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/pjtblockchain/node/node.iml" filepath="$PROJECT_DIR$/pjtblockchain/node/node.iml" />
+      <module fileurl="file://$PROJECT_DIR$/pjtblockchain/pjtblockchain.iml" filepath="$PROJECT_DIR$/pjtblockchain/pjtblockchain.iml" />
     </modules>
   </component>
 </project>

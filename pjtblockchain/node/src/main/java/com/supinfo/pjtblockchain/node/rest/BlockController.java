@@ -5,21 +5,18 @@ import com.supinfo.pjtblockchain.node.service.BlockService;
 import com.supinfo.pjtblockchain.node.service.MiningService;
 import com.supinfo.pjtblockchain.node.service.NodeService;
 import com.supinfo.pjtblockchain.common.domain.Block;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
-
+@Slf4j
 @RestController
 @RequestMapping("block")
 public class BlockController {
-
-    private static final Logger LOG = LoggerFactory.getLogger(BlockController.class);
 
     private final BlockService blockService;
     private final NodeService nodeService;
@@ -51,7 +48,7 @@ public class BlockController {
      */
     @RequestMapping(method = RequestMethod.PUT)
     void addBlock(@RequestBody Block block, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
-        LOG.info("Add block " + Base64.encodeBase64String(block.getHash()));
+        log.info("Add block " + Base64.encodeBase64String(block.getHash()));
         boolean success = blockService.append(block);
 
         if (success) {

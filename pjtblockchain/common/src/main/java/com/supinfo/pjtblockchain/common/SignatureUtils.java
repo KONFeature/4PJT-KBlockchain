@@ -1,17 +1,15 @@
 package com.supinfo.pjtblockchain.common;
 
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
+@Slf4j
 public abstract class SignatureUtils {
-
-    private final static Logger LOG = LoggerFactory.getLogger(SignatureUtils.class);
 
     /**
      * The keyFactory defines which algorithms are used to generate the private/public keys.
@@ -22,7 +20,7 @@ public abstract class SignatureUtils {
         try {
             keyFactory = KeyFactory.getInstance("DSA", "SUN");
         } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-            LOG.error("Failed initializing keyFactory", e);
+            log.error("Failed initializing keyFactory", e);
         }
     }
 

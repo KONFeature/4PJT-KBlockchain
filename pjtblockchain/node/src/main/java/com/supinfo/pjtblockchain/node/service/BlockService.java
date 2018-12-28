@@ -4,8 +4,7 @@ package com.supinfo.pjtblockchain.node.service;
 import com.supinfo.pjtblockchain.common.domain.Block;
 import com.supinfo.pjtblockchain.common.domain.Node;
 import com.supinfo.pjtblockchain.node.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,11 +14,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-
+@Slf4j
 @Service
 public class BlockService {
-
-    private final static Logger LOG = LoggerFactory.getLogger(BlockService.class);
 
     private final TransactionService transactionService;
 
@@ -69,7 +66,7 @@ public class BlockService {
     public void retrieveBlockchain(Node node, RestTemplate restTemplate) {
         Block[] blocks = restTemplate.getForObject(node.getAddress() + "/block", Block[].class);
         Collections.addAll(blockchain, blocks);
-        LOG.info("Retrieved " + blocks.length + " blocks from node " + node.getAddress());
+        log.info("Retrieved " + blocks.length + " blocks from node " + node.getAddress());
     }
 
 

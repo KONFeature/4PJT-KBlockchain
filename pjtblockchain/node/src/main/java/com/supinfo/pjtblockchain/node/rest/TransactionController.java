@@ -4,21 +4,18 @@ package com.supinfo.pjtblockchain.node.rest;
 import com.supinfo.pjtblockchain.node.service.NodeService;
 import com.supinfo.pjtblockchain.node.service.TransactionService;
 import com.supinfo.pjtblockchain.common.domain.Transaction;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Set;
 
-
-@RestController()
+@Slf4j
+@RestController
 @RequestMapping("transaction")
 public class TransactionController {
-
-    private static final Logger LOG = LoggerFactory.getLogger(TransactionController.class);
 
     private final TransactionService transactionService;
     private final NodeService nodeService;
@@ -49,7 +46,7 @@ public class TransactionController {
      */
     @RequestMapping(method = RequestMethod.PUT)
     void addTransaction(@RequestBody Transaction transaction, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
-        LOG.info("Add transaction " + Base64.encodeBase64String(transaction.getHash()));
+        log.info("Add transaction " + Base64.encodeBase64String(transaction.getHash()));
         boolean success = transactionService.add(transaction);
 
         if (success) {

@@ -4,21 +4,18 @@ package com.supinfo.pjtblockchain.node.rest;
 import com.supinfo.pjtblockchain.node.service.AddressService;
 import com.supinfo.pjtblockchain.node.service.NodeService;
 import com.supinfo.pjtblockchain.common.domain.Address;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Collection;
 
-
-@RestController()
+@Slf4j
+@RestController
 @RequestMapping("address")
 public class AddressController {
-
-    private final static Logger LOG = LoggerFactory.getLogger(AddressController.class);
 
     private final AddressService addressService;
     private final NodeService nodeService;
@@ -47,7 +44,7 @@ public class AddressController {
      */
     @RequestMapping(method = RequestMethod.PUT)
     void addAddress(@RequestBody Address address, @RequestParam(required = false) Boolean publish, HttpServletResponse response) {
-        LOG.info("Add address " + Base64.encodeBase64String(address.getHash()));
+        log.info("Add address " + Base64.encodeBase64String(address.getHash()));
 
         if (addressService.getByHash(address.getHash()) == null) {
             addressService.add(address);

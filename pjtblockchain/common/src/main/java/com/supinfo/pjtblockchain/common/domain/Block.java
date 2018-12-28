@@ -2,6 +2,8 @@ package com.supinfo.pjtblockchain.common.domain;
 
 
 import com.google.common.primitives.Longs;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -11,6 +13,8 @@ import java.util.List;
 import java.util.Queue;
 import java.util.stream.Collectors;
 
+@Data
+@NoArgsConstructor
 public class Block {
 
     /**
@@ -43,9 +47,6 @@ public class Block {
      */
     private long timestamp;
 
-    public Block() {
-    }
-
     public Block(byte[] previousBlockHash, List<Transaction> transactions, long tries) {
         this.previousBlockHash = previousBlockHash;
         this.transactions = transactions;
@@ -54,55 +55,6 @@ public class Block {
         this.merkleRoot = calculateMerkleRoot();
         this.hash = calculateHash();
     }
-
-    public byte[] getHash() {
-        return hash;
-    }
-
-    public void setHash(byte[] hash) {
-        this.hash = hash;
-    }
-
-    public byte[] getPreviousBlockHash() {
-        return previousBlockHash;
-    }
-
-    public void setPreviousBlockHash(byte[] previousBlockHash) {
-        this.previousBlockHash = previousBlockHash;
-    }
-
-    public List<Transaction> getTransactions() {
-        return transactions;
-    }
-
-    public void setTransactions(List<Transaction> transactions) {
-        this.transactions = transactions;
-    }
-
-    public byte[] getMerkleRoot() {
-        return merkleRoot;
-    }
-
-    public void setMerkleRoot(byte[] merkleRoot) {
-        this.merkleRoot = merkleRoot;
-    }
-
-    public long getTries() {
-        return tries;
-    }
-
-    public void setTries(long tries) {
-        this.tries = tries;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
     /**
      * Calculates the hash using relevant fields of this type
      * @return SHA256-hash as raw bytes
@@ -141,20 +93,5 @@ public class Block {
             }
         }
         return getHash().length;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Block block = (Block) o;
-
-        return Arrays.equals(hash, block.hash);
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(hash);
     }
 }
