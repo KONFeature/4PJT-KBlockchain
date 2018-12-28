@@ -55,4 +55,5 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 * **Awesome Kotlin** Kotlin ressources list [Link](https://github.com/KotlinBy/awesome-kotlin)
 * **Awesome Java** Java ressources list [Link](https://github.com/akullpp/awesome-java)
 * **Awesome JavaEE8** Java ressources list [Link](https://github.com/hantsy/awesome-javaee8)
+* **Meilleur implementation** [Link](https://blockchainconf.net/blog/java/blockchain-java-developers-build-blockchain-java/)
 
