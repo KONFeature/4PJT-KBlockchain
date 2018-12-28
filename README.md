@@ -5,16 +5,15 @@ Création d'une blockchain, avec un wallet en ligne de commande et une interface
 ## Utilisation
 ### Compilation
 ```shell
-cd pjtblockchain
-./mvnw package
+./compile
 ```
 ### Lancement d'un noeud
 ```shell
-java -jar pjtblockchain/node/target/node-0.0.1-SNAPSHOT.jar
+./start-node
 ```
 ### Interaction avec la blockchain
 ```shell
-java -jar pjtblockchain/client/target/client-0.0.1-SNAPSHOT.jar --help
+./wallet
 ```
 
 ## Changelog
