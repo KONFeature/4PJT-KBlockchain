@@ -6,6 +6,7 @@ import com.supinfo.pjtblockchain.common.domain.Address;
 import com.supinfo.pjtblockchain.common.domain.Transaction;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.binary.Base64;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -30,10 +31,29 @@ import java.security.NoSuchProviderException;
  */
 public class BlockchainWallet {
 
-    static final String DEFAULT_PRIV_KEY = "key.priv";
-    static final String DEFAULT_PUB_KEY = "key.pub";
+    @Value("${key.private:key.priv}")
+    static String privateKey;
+
+    @Value("${key.public:key.pub}")
+    static String publicKey;
+
+    @Value("${node.local.ip:localhost}")
+    static String localNodeIp;
+
+    @Value("${node.local.port:8080}")
+    static int localNodePort;
+
+    @Value("${node.local.path:/}")
+    static String localNodePath;
+
+    static URL localNode;
+
 
     public static void main(String args[]) throws Exception {
+        // Create the local node Url
+        localNode = new URL("http", localNodeIp, localNodePort, localNodePath);
+
+        // Parse and execute the command
         CommandLineParser parser = new DefaultParser();
         Options options = getOptions();
         try {
@@ -58,6 +78,9 @@ public class BlockchainWallet {
         }
     }
 
+    /**
+     * Liste des options disponnibles via la ligne de commande
+     */
     private static Options getOptions() {
         OptionGroup actions = new OptionGroup();
         actions.addOption(new Option("k", "keypair", false, "generate private/public key pair"));
@@ -67,29 +90,11 @@ public class BlockchainWallet {
 
         Options options = new Options();
         options.addOptionGroup(actions);
-        options.addOption(Option.builder("o")
-                .longOpt("node")
-                .hasArg()
-                .argName("Node URL")
-                .desc("needed for address and transaction publishing")
-                .build());
         options.addOption(Option.builder("n")
                 .longOpt("name")
                 .hasArg()
                 .argName("name for new address")
                 .desc("needed for address publishing")
-                .build());
-        options.addOption(Option.builder("p")
-                .longOpt("publickey")
-                .hasArg()
-                .argName("path to key file")
-                .desc("needed for address publishing")
-                .build());
-        options.addOption(Option.builder("v")
-                .longOpt("privatekey")
-                .hasArg()
-                .argName("path to key file")
-                .desc("needed for transaction publishing")
                 .build());
         options.addOption(Option.builder("m")
                 .longOpt("message")
@@ -123,41 +128,31 @@ public class BlockchainWallet {
      * Publishing a new address
      */
     private static void publishAddress(CommandLine line) throws Exception {
-        String node = line.getOptionValue("node");
         String name = line.getOptionValue("name");
-        String publickey = line.getOptionValue("publickey");
-        if(publickey == null || publickey.isEmpty()) {
-            publickey = DEFAULT_PUB_KEY;
+        if (name == null) {
+            throw new ParseException("name is required");
         }
-        if (node == null || name == null) {
-            throw new ParseException("node, name and publickey is required");
+        if(!(new File(Paths.get(publicKey).toUri()).exists())) {
+            throw new ParseException("publickey not found with the value : " + publicKey);
         }
-        if(!(new File(Paths.get(publickey).toUri()).exists())) {
-            throw new ParseException("publickey not found with the value : " + publickey);
-        }
-        BlockchainHelper.publishAddress(new URL(node), Paths.get(publickey), name);
+        BlockchainHelper.publishAddress(localNode, Paths.get(publicKey), name);
     }
 
     /**
      * Publishing a new transaction
      */
     private static void publishTransaction(CommandLine line) throws Exception {
-        String node = line.getOptionValue("node");
         String message = line.getOptionValue("message");
         String amountStr = line.getOptionValue("amount");
         Double amount = Double.isNaN(Double.valueOf(amountStr)) ? null : Double.valueOf(amountStr);
         String sender = line.getOptionValue("sender");
         String receiver = line.getOptionValue("receiver");
-        String privatekey = line.getOptionValue("privatekey");
-        if(privatekey == null || privatekey.isEmpty()) {
-            privatekey = DEFAULT_PRIV_KEY;
+        if (message == null || sender == null) {
+            throw new ParseException(" message, amount, sender, receiver is required");
         }
-        if (node == null || message == null || sender == null || privatekey == null) {
-            throw new ParseException("node, message, amount, sender, receiver and privatekey is required");
+        if(!(new File(Paths.get(privateKey).toUri()).exists())) {
+            throw new ParseException("privatekey not found with the value : " + privateKey);
         }
-        if(!(new File(Paths.get(privatekey).toUri()).exists())) {
-            throw new ParseException("privatekey not found with the value : " + privatekey);
-        }
-        BlockchainHelper.publishTransaction(new URL(node), Paths.get(privatekey), message, Base64.decodeBase64(sender), Base64.decodeBase64(receiver), amount);
+        BlockchainHelper.publishTransaction(localNode, Paths.get(privateKey), message, Base64.decodeBase64(sender), Base64.decodeBase64(receiver), amount);
     }
 }

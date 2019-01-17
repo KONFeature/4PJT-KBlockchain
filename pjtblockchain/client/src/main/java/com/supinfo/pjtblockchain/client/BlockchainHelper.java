@@ -15,8 +15,8 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
-import static com.supinfo.pjtblockchain.client.BlockchainWallet.DEFAULT_PRIV_KEY;
-import static com.supinfo.pjtblockchain.client.BlockchainWallet.DEFAULT_PUB_KEY;
+import static com.supinfo.pjtblockchain.client.BlockchainWallet.privateKey;
+import static com.supinfo.pjtblockchain.client.BlockchainWallet.publicKey;
 
 /**
  * Simple class to help building REST calls for the blockchain from the wallet.
@@ -25,8 +25,8 @@ public class BlockchainHelper {
 
     protected static void generateKeyPair() throws NoSuchProviderException, NoSuchAlgorithmException, IOException {
         KeyPair keyPair = SignatureUtils.generateKeyPair();
-        Files.write(Paths.get(DEFAULT_PRIV_KEY), keyPair.getPrivate().getEncoded());
-        Files.write(Paths.get(DEFAULT_PUB_KEY), keyPair.getPublic().getEncoded());
+        Files.write(Paths.get(privateKey), keyPair.getPrivate().getEncoded());
+        Files.write(Paths.get(publicKey), keyPair.getPublic().getEncoded());
     }
 
     protected static void publishAddress(URL node, Path publicKey, String name) throws IOException {
