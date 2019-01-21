@@ -1,23 +1,23 @@
 package com.supinfo.pjtblockchain.client;
 
 
-import com.supinfo.pjtblockchain.common.SignatureUtils;
-import com.supinfo.pjtblockchain.common.domain.Address;
-import com.supinfo.pjtblockchain.common.domain.Transaction;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.boot.Banner;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.PropertySource;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URLClassLoader;
 import java.nio.file.Paths;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+
+import static java.lang.System.exit;
 
 
 /**
@@ -29,27 +29,48 @@ import java.security.NoSuchProviderException;
  * - Publish a new Address
  * - Publish a new Transaction
  */
-public class BlockchainWallet {
+@Slf4j
+@SpringBootApplication
+@PropertySource("classpath:blockchain.properties")
+public class BlockchainWalletApplication implements CommandLineRunner {
 
     @Value("${key.private:key.priv}")
-    static String privateKey;
+    String privateKey;
 
     @Value("${key.public:key.pub}")
-    static String publicKey;
+    String publicKey;
 
     @Value("${node.local.ip:localhost}")
-    static String localNodeIp;
+    String localNodeIp;
 
     @Value("${node.local.port:8080}")
-    static int localNodePort;
+    int localNodePort;
 
     @Value("${node.local.path:/}")
-    static String localNodePath;
+    String localNodePath;
 
     static URL localNode;
 
+    /**
+     * Start the wallet application with Spring
+     * @param args
+     */
+    public static void main(String[] args) {
+        System.out.println(System.getProperty("java.class.path"));
 
-    public static void main(String args[]) throws Exception {
+
+        SpringApplication app = new SpringApplication(BlockchainWalletApplication.class);
+        app.setBannerMode(Banner.Mode.OFF);
+        app.run(args);
+    }
+
+    /**
+     * Fetch and parse a command
+     * @param args
+     * @throws Exception
+     */
+    @Override
+    public void run(String... args) throws Exception {
         // Create the local node Url
         localNode = new URL("http", localNodeIp, localNodePort, localNodePath);
 
@@ -60,15 +81,22 @@ public class BlockchainWallet {
             CommandLine line = parser.parse(options, args);
             executeCommand(line);
         } catch (ParseException e) {
-            System.err.println(e.getMessage());
+            log.error("Erreurs lors du parse de la commande {}", e.getMessage());
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("BlockchainClient", options , true);
         }
+
+        exit(0);
     }
 
-    private static void executeCommand(CommandLine line) throws Exception {
+    /**
+     * Execute a parsed command
+     * @param line
+     * @throws Exception
+     */
+    private void executeCommand(CommandLine line) throws Exception {
         if (line.hasOption("keypair")) {
-            BlockchainHelper.generateKeyPair();
+            BlockchainHelper.generateKeyPair(privateKey, publicKey);
 
         } else if (line.hasOption("address")) {
             publishAddress(line);
@@ -79,9 +107,9 @@ public class BlockchainWallet {
     }
 
     /**
-     * Liste des options disponnibles via la ligne de commande
+     * List the available option
      */
-    private static Options getOptions() {
+    private Options getOptions() {
         OptionGroup actions = new OptionGroup();
         actions.addOption(new Option("k", "keypair", false, "generate private/public key pair"));
         actions.addOption(new Option("a", "address", false, "publish new address"));
@@ -93,32 +121,32 @@ public class BlockchainWallet {
         options.addOption(Option.builder("n")
                 .longOpt("name")
                 .hasArg()
-                .argName("name for new address")
-                .desc("needed for address publishing")
+                .argName("address")
+                .desc("name used to connect to the blockchain, needed for address publishing")
                 .build());
         options.addOption(Option.builder("m")
                 .longOpt("message")
                 .hasArg()
-                .argName("message for the transaction")
-                .desc("needed for transaction publishing")
+                .argName("message")
+                .desc("message for the transaction, needed for transaction publishing")
                 .build());
         options.addOption(Option.builder("a")
                 .longOpt("amount")
                 .hasArg()
-                .argName("amount to send")
-                .desc("needed for transaction publishing")
+                .argName("amount")
+                .desc("amount to send for the transaction, needed for transaction publishing")
                 .build());
         options.addOption(Option.builder("s")
                 .longOpt("sender")
                 .hasArg()
-                .argName("sender address hash (Base64)")
-                .desc("needed for transaction publishing")
+                .argName("address")
+                .desc("sender address hash (Base64), needed for transaction publishing")
                 .build());
-        options.addOption(Option.builder("r")
-                .longOpt("receiver")
+        options.addOption(Option.builder("d")
+                .longOpt("destination")
                 .hasArg()
-                .argName("target of the transaction address hash (Base64)")
-                .desc("needed for transaction publishing")
+                .argName("address")
+                .desc("destination address hash (Base64), needed for transaction publishing")
                 .build());
 
         return options;
@@ -127,7 +155,7 @@ public class BlockchainWallet {
     /**
      * Publishing a new address
      */
-    private static void publishAddress(CommandLine line) throws Exception {
+    private void publishAddress(CommandLine line) throws Exception {
         String name = line.getOptionValue("name");
         if (name == null) {
             throw new ParseException("name is required");
@@ -141,7 +169,7 @@ public class BlockchainWallet {
     /**
      * Publishing a new transaction
      */
-    private static void publishTransaction(CommandLine line) throws Exception {
+    private void publishTransaction(CommandLine line) throws Exception {
         String message = line.getOptionValue("message");
         String amountStr = line.getOptionValue("amount");
         Double amount = Double.isNaN(Double.valueOf(amountStr)) ? null : Double.valueOf(amountStr);

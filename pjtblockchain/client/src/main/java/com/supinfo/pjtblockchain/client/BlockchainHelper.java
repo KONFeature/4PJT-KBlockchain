@@ -15,18 +15,15 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
-import static com.supinfo.pjtblockchain.client.BlockchainWallet.privateKey;
-import static com.supinfo.pjtblockchain.client.BlockchainWallet.publicKey;
-
 /**
  * Simple class to help building REST calls for the blockchain from the wallet.
  */
 public class BlockchainHelper {
 
-    protected static void generateKeyPair() throws NoSuchProviderException, NoSuchAlgorithmException, IOException {
+    protected static void generateKeyPair(String privKey, String pubKey) throws NoSuchProviderException, NoSuchAlgorithmException, IOException {
         KeyPair keyPair = SignatureUtils.generateKeyPair();
-        Files.write(Paths.get(privateKey), keyPair.getPrivate().getEncoded());
-        Files.write(Paths.get(publicKey), keyPair.getPublic().getEncoded());
+        Files.write(Paths.get(privKey), keyPair.getPrivate().getEncoded());
+        Files.write(Paths.get(pubKey), keyPair.getPublic().getEncoded());
     }
 
     protected static void publishAddress(URL node, Path publicKey, String name) throws IOException {

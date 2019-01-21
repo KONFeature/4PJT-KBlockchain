@@ -32,13 +32,6 @@
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
 
-	<dependencies>
-		<!--Spring Boot-->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-	</dependencies>
 
 	<!--Dependency manager pour avoir la meme version des plugin dans tout le projet-->
 	<dependencyManagement>
