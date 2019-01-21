@@ -4,4 +4,4 @@
 @REM  -
 @REM ----------------------------------------------------------------------------
 
-java -jar pjtblockchain/client/target/client-0.0.1-SNAPSHOT.jar %*
+java -jar bin/com.supinfo-client-0.0.1-SNAPSHOT.jar %*

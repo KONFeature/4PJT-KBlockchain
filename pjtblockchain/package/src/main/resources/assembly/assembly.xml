@@ -1,0 +1,43 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
+http://maven.apache.org/ASSEMBLY/2.0.0 ">
+
+    <id>bundle</id>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <!-- Fichier relatif au projet (script d'execution et configuration)-->
+    <fileSets>
+        <fileSet>
+            <directory>src/main/resources/script</directory>
+            <outputDirectory>/</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>src/main/resources/cfg</directory>
+            <outputDirectory>/config</outputDirectory>
+        </fileSet>
+    </fileSets>
+
+    <!--Les modules du projets-->
+    <moduleSets>
+       <moduleSet>
+           <useAllReactorProjects>true</useAllReactorProjects>
+
+           <includes>
+               <include>com.supinfo:client</include>
+               <include>com.supinfo:common</include>
+               <include>com.supinfo:node</include>
+           </includes>
+           <binaries>
+               <outputDirectory>/bin</outputDirectory>
+               <outputFileNameMapping>${module.groupId}-${module.artifactId}-${module.version}.${module.extension}</outputFileNameMapping>
+               <unpack>false</unpack>
+               <includeDependencies>false</includeDependencies>
+           </binaries>
+       </moduleSet>
+    </moduleSets>
+</assembly>
+
+

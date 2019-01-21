@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ----------------------------------------------------------------------------
-# 4PJT - BlockChain : Interact with wallet
+# 4PJT - BlockChain : Launch node script
 # USAGE :
 #  -
 # ----------------------------------------------------------------------------
 
-java -jar pjtblockchain/client/target/client-0.0.1-SNAPSHOT.jar "$@"
+java -jar bin/com.supinfo-node-0.0.1-SNAPSHOT.jar "$@"
