@@ -19,7 +19,7 @@ import java.security.NoSuchProviderException;
 
 @Slf4j
 @Service
-public class CryptoService {
+public class CryptoWalletService {
 
     @Value("${key.private:key.priv}")
     private String privateKey;
@@ -48,15 +48,15 @@ public class CryptoService {
     /**
      * Get the the private key
      */
-    public File getPrivateKey() {
-        return new File(privateKey);
+    public byte[] getPrivateKey() throws IOException {
+        return Files.readAllBytes(new File(privateKey).toPath());
     }
 
     /**
      * Get the public key
      */
-    public File getPublicKey() {
-        return new File(publicKey);
+    public byte[] getPublicKey() throws IOException {
+        return Files.readAllBytes(new File(publicKey).toPath());
     }
 
 }

@@ -42,6 +42,7 @@ public class TransactionService {
      */
     public synchronized boolean add(Transaction transaction) {
         if (verify(transaction)) {
+            transferFound(transaction);
             transactionPool.add(transaction);
             return true;
         }
@@ -65,11 +66,17 @@ public class TransactionService {
         return transactionPool.containsAll(transactions);
     }
 
+    /**
+     * Verify if a transaction is correct
+     * @param transaction
+     * @return
+     */
     private boolean verify(Transaction transaction) {
         // correct address
-        Address sender = addressService.getByHash(transaction.getSenderHash());
-        if (sender == null) {
-            log.warn("Unknown sender address {} ", Base64.encodeBase64String(transaction.getSenderHash()));
+        if(transaction.getSenderHash().equals(transaction.getReceiverHash())) {
+            log.warn("Same sender and receiver address {} {} ",
+                    Base64.encodeBase64String(transaction.getSenderHash()),
+                    Base64.encodeBase64String(transaction.getReceiverHash()));
             return false;
         }
         Address destination = addressService.getByHash(transaction.getReceiverHash());
@@ -77,8 +84,17 @@ public class TransactionService {
             log.warn("Unknown destination address {} ", Base64.encodeBase64String(transaction.getReceiverHash()));
             return false;
         }
+        Address sender = addressService.getByHash(transaction.getSenderHash());
+        if (sender == null) {
+            log.warn("Unknown sender address {} ", Base64.encodeBase64String(transaction.getSenderHash()));
+            return false;
+        }
 
-        // TODO : check the current money receiver has and check receiver hash
+        // Correct sender balance
+        if(sender.getBalance() < transaction.getAmount()) {
+            log.warn("Insufficient balance to perform this operation for {}", Base64.encodeBase64String(transaction.getSenderHash()));
+            return false;
+        }
 
         // check the signature
         try {
@@ -99,6 +115,19 @@ public class TransactionService {
 
         return true;
     }
+
+    /**
+     * Transfer the found of a transaction
+     * @param transaction
+     */
+    private void transferFound(Transaction transaction) {
+        Address destination = addressService.getByHash(transaction.getReceiverHash());
+        Address sender = addressService.getByHash(transaction.getSenderHash());
+
+        sender.pullFromBalance(transaction.getAmount());
+        destination.putInBalance(transaction.getAmount());
+    }
+
 
     /**
      * Download Transactions from other Node and them to the pool

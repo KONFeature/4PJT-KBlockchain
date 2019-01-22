@@ -1,9 +1,9 @@
 package com.supinfo.pjtblockchain.client;
 
 
-import com.supinfo.pjtblockchain.client.service.AddressService;
-import com.supinfo.pjtblockchain.client.service.CryptoService;
-import com.supinfo.pjtblockchain.client.service.TransactionService;
+import com.supinfo.pjtblockchain.client.service.AddressWalletService;
+import com.supinfo.pjtblockchain.client.service.CryptoWalletService;
+import com.supinfo.pjtblockchain.client.service.TransactionWalletService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.binary.Base64;
@@ -16,9 +16,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
 
-import java.io.File;
 import java.net.URL;
-import java.nio.file.Paths;
 
 import static java.lang.System.exit;
 
@@ -37,19 +35,23 @@ import static java.lang.System.exit;
 @PropertySource("file:${application_home}/config/wallet.properties")
 public class BlockchainWalletApplication implements CommandLineRunner {
 
-    @Autowired
-    TransactionService transactionService;
-
-    @Autowired
-    AddressService addressService;
-
-    @Autowired
-    CryptoService cryptoService;
+    private final TransactionWalletService transactionWalletService;
+    private final AddressWalletService addressWalletService;
+    private final CryptoWalletService cryptoWalletService;
 
     @Value("${node.local.address:http://127.0.0.1:8080/}")
     private String localNodeAddress;
 
     static URL localNode;
+
+    @Autowired
+    public BlockchainWalletApplication(TransactionWalletService transactionWalletService,
+                                       AddressWalletService addressWalletService,
+                                       CryptoWalletService cryptoWalletService) {
+        this.transactionWalletService = transactionWalletService;
+        this.addressWalletService = addressWalletService;
+        this.cryptoWalletService = cryptoWalletService;
+    }
 
     /**
      * Start the wallet application with Spring
@@ -82,6 +84,10 @@ public class BlockchainWalletApplication implements CommandLineRunner {
             log.error("Erreurs lors du parse de la commande {}", e.getMessage());
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("BlockchainClient", options , true);
+        } catch (SecurityException e) {
+            log.error("Erreurs de sécurité lors de l'éxécution de la commande {}", e.getMessage());
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("BlockchainClient", options , true);
         }
 
         exit(0);
@@ -94,7 +100,7 @@ public class BlockchainWalletApplication implements CommandLineRunner {
      */
     private void executeCommand(CommandLine line) throws Exception {
         if (line.hasOption("keypair")) {
-            cryptoService.generateKeyPair();
+            cryptoWalletService.generateKeyPair();
 
         } else if (line.hasOption("address")) {
             publishAddress(line);
@@ -158,10 +164,7 @@ public class BlockchainWalletApplication implements CommandLineRunner {
         if (name == null) {
             throw new ParseException("name is required");
         }
-        if(!cryptoService.keyExists()) {
-            throw new ParseException("publickey not found at " + cryptoService.getPublicKey().getAbsolutePath());
-        }
-        addressService.publishAddress(localNode, cryptoService.getPublicKey().toPath(), name);
+        addressWalletService.publishAddress(localNode, name);
     }
 
     /**
@@ -176,9 +179,6 @@ public class BlockchainWalletApplication implements CommandLineRunner {
         if (message == null || sender == null || amount == null || receiver == null) {
             throw new ParseException(" message, amount, sender, receiver is required");
         }
-        if(!cryptoService.keyExists()) {
-            throw new ParseException("privatekey not found at " + cryptoService.getPrivateKey().getAbsolutePath());
-        }
-        transactionService.publishTransaction(localNode, cryptoService.getPrivateKey().toPath(), message, Base64.decodeBase64(sender), Base64.decodeBase64(receiver), amount);
+        transactionWalletService.publishTransaction(localNode, message, Base64.decodeBase64(sender), Base64.decodeBase64(receiver), amount);
     }
 }

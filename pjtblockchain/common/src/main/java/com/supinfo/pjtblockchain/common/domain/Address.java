@@ -26,10 +26,16 @@ public class Address {
      */
     private byte[] publicKey;
 
+    /**
+     * The balance of coin for this address
+     */
+    private Double balance;
+
     public Address(String name, byte[] publicKey) {
         this.name = name;
         this.publicKey = publicKey;
         this.hash = calculateHash();
+        this.balance = 10.0;
     }
 
     /**
@@ -39,5 +45,21 @@ public class Address {
     private byte[] calculateHash() {
         byte[] hashableData = ArrayUtils.addAll(name.getBytes(), publicKey);
         return DigestUtils.sha256(hashableData);
+    }
+
+    /**
+     * Put in the balance the amount
+     * @param amount
+     */
+    public void putInBalance(Double amount) {
+        this.balance += amount;
+    }
+
+    /**
+     * Pull from the balance the amount
+     * @param amount
+     */
+    public void pullFromBalance(Double amount) {
+        this.balance -= amount;
     }
 }

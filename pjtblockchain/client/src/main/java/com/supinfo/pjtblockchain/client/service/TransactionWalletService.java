@@ -5,6 +5,8 @@ import com.supinfo.pjtblockchain.common.SignatureUtils;
 import com.supinfo.pjtblockchain.common.domain.Transaction;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -20,18 +22,29 @@ import java.nio.file.Path;
  */
 @Slf4j
 @Service
-public class TransactionService {
+public class TransactionWalletService {
+
+    private final CryptoWalletService cryptoWalletService;
 
     @Value("${save.file.transaction.hash:save/transaction.txt}")
     private String transactionSaveFilePath;
 
+    @Autowired
+    public TransactionWalletService(CryptoWalletService cryptoWalletService) {
+        this.cryptoWalletService = cryptoWalletService;
+    }
+
     /**
      * Publish a new transaction on the blockchain
      */
-    public void publishTransaction(URL node, Path privateKey, String text, byte[] senderHash, byte[] receiverHash, Double amount) throws Exception {
+    public void publishTransaction(URL node, String text, byte[] senderHash, byte[] receiverHash, Double amount) throws Exception {
+        if(!cryptoWalletService.keyExists()) {
+            throw new SecurityException("The keypair wasn't found, make sure to generate it.");
+        }
+
         log.info("Publishing the transaction");
         RestTemplate restTemplate = new RestTemplate();
-        byte[] signature = SignatureUtils.sign(text.getBytes(), Files.readAllBytes(privateKey));
+        byte[] signature = SignatureUtils.sign(ArrayUtils.addAll(text.getBytes(), amount.byteValue()), cryptoWalletService.getPrivateKey());
         Transaction transaction = new Transaction(text, amount, senderHash, receiverHash, signature);
         restTemplate.put(node.toString() + "/transaction?publish=true", transaction);
         String transactionHash = Base64.encodeBase64String(transaction.getHash());

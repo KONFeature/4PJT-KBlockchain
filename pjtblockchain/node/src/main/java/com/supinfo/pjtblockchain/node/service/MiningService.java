@@ -6,6 +6,7 @@ import com.supinfo.pjtblockchain.common.domain.Transaction;
 import com.supinfo.pjtblockchain.node.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +23,9 @@ public class MiningService implements Runnable {
 
     private AtomicBoolean runMiner = new AtomicBoolean(false);
 
+
+    @Value("${mining.address.hash.reward}")
+    private String miningAddressReward;
 
     @Autowired
     public MiningService(TransactionService transactionService, NodeService nodeService, BlockService blockService) {
@@ -58,6 +62,7 @@ public class MiningService implements Runnable {
             Block block = mineBlock();
             if (block != null) {
                 // Found block! Append and publish
+                rewardAddress();
                 log.info("Mined block with " + block.getTransactions().size() + " transactions and nonce " + block.getTries());
                 blockService.append(block);
                 nodeService.broadcastPut("block", block);
@@ -66,6 +71,9 @@ public class MiningService implements Runnable {
         log.info("Miner stopped");
     }
 
+    /**
+     * Function used to mine a block
+     */
     private Block mineBlock() {
         long tries = 0;
 
@@ -78,7 +86,7 @@ public class MiningService implements Runnable {
         if (transactions.isEmpty()) {
             log.info("No transactions available, pausing");
             try {
-                Thread.sleep(10000);
+                Thread.sleep(Config.REFRESH_RATE_EMPTY_TRANSACTION);
             } catch (InterruptedException e) {
                 log.error("Thread interrupted", e);
             }
@@ -94,6 +102,16 @@ public class MiningService implements Runnable {
             tries++;
         }
         return null;
+    }
+
+    /**
+     * Send the mining reward to the properties address
+     */
+    private void rewardAddress() {
+        if(miningAddressReward == null || miningAddressReward.isEmpty()) {
+            log.info("No mining address reward specified");
+            return;
+        }
     }
 
 }

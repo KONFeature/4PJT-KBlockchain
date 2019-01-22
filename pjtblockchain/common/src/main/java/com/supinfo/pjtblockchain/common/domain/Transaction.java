@@ -69,7 +69,7 @@ public class Transaction {
     }
 
     public byte[] getSignableData() {
-        return text.getBytes();
+        return ArrayUtils.addAll(text.getBytes(), amount.byteValue());
     }
 
     /**
