@@ -72,6 +72,12 @@ public class TransactionService {
      * @return
      */
     private boolean verify(Transaction transaction) {
+        // Check amount
+        if(transaction.getAmount() <= 0) {
+            log.warn("Cannot make prior than 0 transaction {}");
+            return false;
+        }
+
         // correct address
         if(transaction.getSenderHash().equals(transaction.getReceiverHash())) {
             log.warn("Same sender and receiver address {} {} ",

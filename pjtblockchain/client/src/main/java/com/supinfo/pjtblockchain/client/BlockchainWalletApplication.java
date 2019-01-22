@@ -1,13 +1,13 @@
 package com.supinfo.pjtblockchain.client;
 
 
+import com.supinfo.pjtblockchain.client.helper.CliHelper;
 import com.supinfo.pjtblockchain.client.service.AddressWalletService;
 import com.supinfo.pjtblockchain.client.service.CryptoWalletService;
 import com.supinfo.pjtblockchain.client.service.TransactionWalletService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.Banner;
@@ -17,6 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.PropertySource;
 
 import java.net.URL;
+import java.util.Map;
 
 import static java.lang.System.exit;
 
@@ -76,7 +77,8 @@ public class BlockchainWalletApplication implements CommandLineRunner {
 
         // Parse and execute the command
         CommandLineParser parser = new DefaultParser();
-        Options options = getOptions();
+        Options options = CliHelper.getOptions();
+
         try {
             CommandLine line = parser.parse(options, args);
             executeCommand(line);
@@ -101,84 +103,31 @@ public class BlockchainWalletApplication implements CommandLineRunner {
     private void executeCommand(CommandLine line) throws Exception {
         if (line.hasOption("keypair")) {
             cryptoWalletService.generateKeyPair();
-
         } else if (line.hasOption("address")) {
             publishAddress(line);
-
         } else if (line.hasOption("transaction")) {
             publishTransaction(line);
         }
     }
 
-    /**
-     * List the available option
-     */
-    private Options getOptions() {
-        OptionGroup actions = new OptionGroup();
-        actions.addOption(new Option("k", "keypair", false, "generate private/public key pair"));
-        actions.addOption(new Option("a", "address", false, "publish new address"));
-        actions.addOption(new Option("t", "transaction", false, "publish new transaction"));
-        actions.setRequired(true);
-
-        Options options = new Options();
-        options.addOptionGroup(actions);
-        options.addOption(Option.builder("n")
-                .longOpt("name")
-                .hasArg()
-                .argName("address")
-                .desc("name used to connect to the blockchain, needed for address publishing")
-                .build());
-        options.addOption(Option.builder("m")
-                .longOpt("message")
-                .hasArg()
-                .argName("message")
-                .desc("message for the transaction, needed for transaction publishing")
-                .build());
-        options.addOption(Option.builder("am")
-                .longOpt("amount")
-                .hasArg()
-                .argName("amount")
-                .desc("amount to send for the transaction, needed for transaction publishing")
-                .build());
-        options.addOption(Option.builder("s")
-                .longOpt("sender")
-                .hasArg()
-                .argName("address")
-                .desc("sender address hash (Base64), needed for transaction publishing")
-                .build());
-        options.addOption(Option.builder("d")
-                .longOpt("destination")
-                .hasArg()
-                .argName("address")
-                .desc("destination address hash (Base64), needed for transaction publishing")
-                .build());
-
-        return options;
-    }
 
     /**
      * Publishing a new address
      */
-    private void publishAddress(CommandLine line) throws Exception {
-        String name = line.getOptionValue("name");
-        if (name == null) {
-            throw new ParseException("name is required");
-        }
-        addressWalletService.publishAddress(localNode, name);
+    private void publishAddress(CommandLine commandLine) throws Exception {
+        Map<String, String> lineArg = CliHelper.parseAddressCl(commandLine);
+        addressWalletService.publishAddress(localNode, lineArg.get("name"));
     }
 
     /**
      * Publishing a new transaction
      */
-    private void publishTransaction(CommandLine line) throws Exception {
-        String message = line.getOptionValue("message");
-        String amountStr = line.getOptionValue("amount");
-        Double amount = NumberUtils.isCreatable(amountStr) ? Double.valueOf(amountStr) : null;
-        String sender = line.getOptionValue("sender");
-        String receiver = line.getOptionValue("destination");
-        if (message == null || sender == null || amount == null || receiver == null) {
-            throw new ParseException(" message, amount, sender, receiver is required");
-        }
-        transactionWalletService.publishTransaction(localNode, message, Base64.decodeBase64(sender), Base64.decodeBase64(receiver), amount);
+    private void publishTransaction(CommandLine commandLine) throws Exception {
+        Map<String, String> lineArg = CliHelper.parseTransactionCl(commandLine);
+        transactionWalletService.publishTransaction(localNode,
+                lineArg.get("message"),
+                Base64.decodeBase64(lineArg.get("sender")),
+                Base64.decodeBase64(lineArg.get("receiver")),
+                Double.parseDouble(lineArg.get("amount")));
     }
 }
