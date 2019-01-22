@@ -8,8 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.client.ClientHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -68,7 +71,7 @@ public class BlockchainWalletService {
         log.info("Publishing the transaction");
         RestTemplate restTemplate = new RestTemplate();
         byte[] signature = SignatureUtils.sign(text.getBytes(), Files.readAllBytes(privateKey));
-        Transaction transaction = new Transaction(text, amount != null ? amount : 1.0, senderHash, receiverHash, signature);
+        Transaction transaction = new Transaction(text, amount, senderHash, receiverHash, signature);
         restTemplate.put(node.toString() + "/transaction?publish=true", transaction);
         String transactionHash = Base64.encodeBase64String(transaction.getHash());
         log.info("Transaction successfully published, hash {}", transactionHash);

@@ -4,6 +4,7 @@ package com.supinfo.pjtblockchain.client;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.Banner;
@@ -172,10 +173,10 @@ public class BlockchainWalletApplication implements CommandLineRunner {
     private void publishTransaction(CommandLine line) throws Exception {
         String message = line.getOptionValue("message");
         String amountStr = line.getOptionValue("amount");
-        Double amount = Double.isNaN(Double.valueOf(amountStr)) ? null : Double.valueOf(amountStr);
+        Double amount = NumberUtils.isCreatable(amountStr) ? Double.valueOf(amountStr) : null;
         String sender = line.getOptionValue("sender");
-        String receiver = line.getOptionValue("receiver");
-        if (message == null || sender == null) {
+        String receiver = line.getOptionValue("destination");
+        if (message == null || sender == null || amount == null || receiver == null) {
             throw new ParseException(" message, amount, sender, receiver is required");
         }
         if(!(new File(Paths.get(privateKey).toUri()).exists())) {
