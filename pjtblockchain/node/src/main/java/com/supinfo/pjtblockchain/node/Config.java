@@ -16,7 +16,7 @@ public abstract class Config {
     /**
      * The amount added to ur balance when we successfully mined a block
      */
-    public static final int MINING_REWARD_AMOUNT = 10;
+    public static final Double MINING_REWARD_PER_BLOCK_AMOUNT = 10.0;
 
     /**
      * Refresh rate for the miner when we have no transaction to mine

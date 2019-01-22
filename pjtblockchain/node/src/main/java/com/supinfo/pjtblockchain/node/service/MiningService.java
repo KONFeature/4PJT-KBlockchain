@@ -1,10 +1,12 @@
 package com.supinfo.pjtblockchain.node.service;
 
 
+import com.supinfo.pjtblockchain.common.domain.Address;
 import com.supinfo.pjtblockchain.common.domain.Block;
 import com.supinfo.pjtblockchain.common.domain.Transaction;
 import com.supinfo.pjtblockchain.node.Config;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,26 +22,28 @@ public class MiningService implements Runnable {
     private final TransactionService transactionService;
     private final NodeService nodeService;
     private final BlockService blockService;
+    private final AddressService addressService;
 
     private AtomicBoolean runMiner = new AtomicBoolean(false);
 
-
-    @Value("${mining.address.hash.reward}")
-    private String miningAddressReward;
+    private String minerAddressReward;
 
     @Autowired
-    public MiningService(TransactionService transactionService, NodeService nodeService, BlockService blockService) {
+    public MiningService(TransactionService transactionService, NodeService nodeService,
+                         BlockService blockService, AddressService addressService) {
         this.transactionService = transactionService;
         this.nodeService = nodeService;
         this.blockService = blockService;
+        this.addressService = addressService;
     }
 
     /**
      * Start the miner
      */
-    public void startMiner() {
+    public void startMiner(String miningAddressReward) {
         if (runMiner.compareAndSet(false, true)) {
-            log.info("Starting miner");
+            this.minerAddressReward = miningAddressReward;
+            log.info("Starting miner with address rewarded {}", miningAddressReward);
             Thread thread = new Thread(this);
             thread.start();
         }
@@ -97,6 +101,7 @@ public class MiningService implements Runnable {
         while (runMiner.get()) {
             Block block = new Block(previousBlockHash, transactions, tries);
             if (block.getLeadingZerosCount() >= Config.DIFFICULTY) {
+                log.info("Successfully mined a block, address {} will be rewarded", minerAddressReward);
                 return block;
             }
             tries++;
@@ -108,10 +113,13 @@ public class MiningService implements Runnable {
      * Send the mining reward to the properties address
      */
     private void rewardAddress() {
-        if(miningAddressReward == null || miningAddressReward.isEmpty()) {
+        if(minerAddressReward == null || minerAddressReward.isEmpty()) {
             log.info("No mining address reward specified");
             return;
         }
+
+        Address rewardedAddress = addressService.getByHash(Base64.decodeBase64(minerAddressReward));
+        rewardedAddress.putInBalance(Config.MINING_REWARD_PER_BLOCK_AMOUNT);
     }
 
 }

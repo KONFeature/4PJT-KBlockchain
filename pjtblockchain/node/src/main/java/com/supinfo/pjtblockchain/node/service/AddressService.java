@@ -8,10 +8,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -29,6 +26,15 @@ public class AddressService {
      */
     public Address getByHash(byte[] hash) {
         return addresses.get(Base64.encodeBase64String(hash));
+    }
+
+    /**
+     * Return a random address from the map
+     * @return
+     */
+    public Address getRandom() {
+        Random random = new Random();
+        return new ArrayList<>(addresses.values()).get(random.nextInt(addresses.values().size()));
     }
 
     /**

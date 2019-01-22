@@ -1,6 +1,7 @@
 package com.supinfo.pjtblockchain.node.rest;
 
 
+import com.supinfo.pjtblockchain.node.service.AddressService;
 import com.supinfo.pjtblockchain.node.service.BlockService;
 import com.supinfo.pjtblockchain.node.service.MiningService;
 import com.supinfo.pjtblockchain.node.service.NodeService;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -21,12 +23,15 @@ public class BlockController {
     private final BlockService blockService;
     private final NodeService nodeService;
     private final MiningService miningService;
+    private final AddressService addressService;
 
     @Autowired
-    public BlockController(BlockService blockService, NodeService nodeService, MiningService miningService) {
+    public BlockController(BlockService blockService, NodeService nodeService,
+                           MiningService miningService, AddressService addressService) {
         this.blockService = blockService;
         this.nodeService = nodeService;
         this.miningService = miningService;
+        this.addressService = addressService;
     }
 
     /**
@@ -66,8 +71,9 @@ public class BlockController {
      * Start mining of Blocks on this Node in a Thread
      */
     @RequestMapping(path = "start-miner")
-    public void startMiner() {
-        miningService.startMiner();
+    public void startMiner(@RequestParam(value = "address") Optional<String> addressHashOpt) {
+        String addressHash = addressHashOpt.isPresent() ? addressHashOpt.get() : Base64.encodeBase64String(addressService.getRandom().getHash());
+        miningService.startMiner(addressHash);
     }
 
     /**
