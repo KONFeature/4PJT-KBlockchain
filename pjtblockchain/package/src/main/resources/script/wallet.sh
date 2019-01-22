@@ -5,4 +5,5 @@
 #  -
 # ----------------------------------------------------------------------------
 
-java -jar bin/com.supinfo-client-0.0.1-SNAPSHOT.jar "$@"s
+export APPLICATION_HOME=.
+java -jar bin/com.supinfo-client-0.0.1-SNAPSHOT.jar "$@"

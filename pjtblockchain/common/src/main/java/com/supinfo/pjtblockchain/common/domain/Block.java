@@ -1,13 +1,13 @@
 package com.supinfo.pjtblockchain.common.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.primitives.Longs;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Block {
 
     /**
