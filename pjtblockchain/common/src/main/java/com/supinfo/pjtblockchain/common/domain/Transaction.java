@@ -1,16 +1,16 @@
 package com.supinfo.pjtblockchain.common.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.primitives.Longs;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.Arrays;
-
 @Data
 @NoArgsConstructor
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Transaction {
 
     /**
@@ -24,9 +24,19 @@ public class Transaction {
     private String text;
 
     /**
+     * Amount of this transaction
+     */
+    private Double amount;
+
+    /**
      * The hash of the address which is responsible for this Transaction
      */
     private byte[] senderHash;
+
+    /**
+     * The hash of the address which will receive the transaction
+     */
+    private byte[] receiverHash;
 
     /**
      * Signature of text which can be verified with publicKey of sender address
@@ -40,6 +50,18 @@ public class Transaction {
 
     public Transaction(String text, byte[] senderHash, byte[] signature) {
         this.text = text;
+        this.amount = 1.0;
+        this.senderHash = senderHash;
+        this.receiverHash = senderHash;
+        this.signature = signature;
+        this.timestamp = System.currentTimeMillis();
+        this.hash = calculateHash();
+    }
+
+    public Transaction(String text, Double amount, byte[] senderHash, byte[] receiverHash, byte[] signature) {
+        this.text = text;
+        this.amount = amount;
+        this.receiverHash = receiverHash;
         this.senderHash = senderHash;
         this.signature = signature;
         this.timestamp = System.currentTimeMillis();
@@ -55,7 +77,9 @@ public class Transaction {
      * @return SHA256-hash as raw bytes
      */
     public byte[] calculateHash() {
-        byte[] hashableData = ArrayUtils.addAll(text.getBytes(), senderHash);
+        byte[] hashableData = ArrayUtils.addAll(text.getBytes(), amount.byteValue());
+        hashableData = ArrayUtils.addAll(hashableData, senderHash);
+        hashableData = ArrayUtils.addAll(hashableData, receiverHash);
         hashableData = ArrayUtils.addAll(hashableData, signature);
         hashableData = ArrayUtils.addAll(hashableData, Longs.toByteArray(timestamp));
         return DigestUtils.sha256(hashableData);

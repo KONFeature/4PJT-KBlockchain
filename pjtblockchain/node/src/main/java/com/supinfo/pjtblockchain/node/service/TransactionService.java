@@ -73,6 +73,8 @@ public class TransactionService {
             return false;
         }
 
+        // TODO : check the current money receiver has and check receiver hash
+
         try {
             if (!SignatureUtils.verify(transaction.getSignableData(), transaction.getSignature(), sender.getPublicKey())) {
                 log.warn("Invalid signature");

@@ -10,13 +10,19 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>node</artifactId>
+    <name>Node</name>
+    <description>Module qui permet de lancer un noeud de la blockchain</description>
+    <packaging>jar</packaging>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.supinfo</groupId>
             <artifactId>common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
 
             <exclusions>
                 <exclusion>
@@ -25,15 +31,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.6</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
-
 
 </project>

@@ -1,7 +1,8 @@
 @REM ----------------------------------------------------------------------------
-@REM 4PJT - BlockChain : Interact with wallet
+@REM 4PJT - BlockChain : Launch node script
 @REM USAGE :
 @REM  -
 @REM ----------------------------------------------------------------------------
 
-java -jar pjtblockchain/client/target/client-0.0.1-SNAPSHOT.jar %*
+setx -m APPLICATION_HOME "."
+java -jar bin/com.supinfo-node-0.0.1-SNAPSHOT.jar

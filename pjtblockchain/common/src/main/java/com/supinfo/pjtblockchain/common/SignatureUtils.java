@@ -18,9 +18,9 @@ public abstract class SignatureUtils {
 
     static {
         try {
-            keyFactory = KeyFactory.getInstance("DSA", "SUN");
-        } catch (NoSuchAlgorithmException | NoSuchProviderException e) {
-            log.error("Failed initializing keyFactory", e);
+            keyFactory = KeyFactory.getInstance("RSA");
+        } catch (NoSuchAlgorithmException e) {
+            log.error("Failed initializing keyFactory {}", e);
         }
     }
 
@@ -28,10 +28,9 @@ public abstract class SignatureUtils {
      * Generate a random key pair.
      * @return KeyPair containg private and public key
      */
-    public static KeyPair generateKeyPair() throws NoSuchProviderException, NoSuchAlgorithmException {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("DSA", "SUN");
-        SecureRandom random = SecureRandom.getInstance("SHA1PRNG", "SUN");
-        keyGen.initialize(1024, random);
+    public static KeyPair generateKeyPair() throws  NoSuchAlgorithmException {
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(2048, new SecureRandom());
         return keyGen.generateKeyPair();
     }
 
@@ -42,7 +41,7 @@ public abstract class SignatureUtils {
      * @param publicKey key to verify the data was signed by owner of corresponding private key
      * @return true if the signature verification succeeds.
      */
-    public static boolean verify(byte[] data, byte[] signature, byte[] publicKey) throws InvalidKeySpecException, NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    public static boolean verify(byte[] data, byte[] signature, byte[] publicKey) throws InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         // construct a public key from raw bytes
         X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKey);
         PublicKey publicKeyObj = keyFactory.generatePublic(keySpec);
@@ -72,8 +71,8 @@ public abstract class SignatureUtils {
         return sig.sign();
     }
 
-    private static Signature getSignatureObj() throws NoSuchProviderException, NoSuchAlgorithmException {
-        return Signature.getInstance("SHA1withDSA", "SUN");
+    private static Signature getSignatureObj() throws NoSuchAlgorithmException {
+        return Signature.getInstance("SHA256withRSA");
     }
 
 }
