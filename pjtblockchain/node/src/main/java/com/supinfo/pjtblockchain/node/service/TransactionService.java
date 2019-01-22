@@ -66,22 +66,28 @@ public class TransactionService {
     }
 
     private boolean verify(Transaction transaction) {
-        // correct signature
+        // correct address
         Address sender = addressService.getByHash(transaction.getSenderHash());
         if (sender == null) {
-            log.warn("Unknown address " + Base64.encodeBase64String(transaction.getSenderHash()));
+            log.warn("Unknown sender address {} ", Base64.encodeBase64String(transaction.getSenderHash()));
+            return false;
+        }
+        Address destination = addressService.getByHash(transaction.getReceiverHash());
+        if (destination == null) {
+            log.warn("Unknown destination address {} ", Base64.encodeBase64String(transaction.getReceiverHash()));
             return false;
         }
 
         // TODO : check the current money receiver has and check receiver hash
 
+        // check the signature
         try {
             if (!SignatureUtils.verify(transaction.getSignableData(), transaction.getSignature(), sender.getPublicKey())) {
-                log.warn("Invalid signature");
+                log.warn("Invalid transaction signature");
                 return false;
             }
         } catch (Exception e) {
-            log.error("Error while verification", e);
+            log.error("Error while verifying the transaction {}", e);
             return false;
         }
 

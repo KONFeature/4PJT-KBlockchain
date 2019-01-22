@@ -1,6 +1,9 @@
 package com.supinfo.pjtblockchain.client;
 
 
+import com.supinfo.pjtblockchain.client.service.AddressService;
+import com.supinfo.pjtblockchain.client.service.CryptoService;
+import com.supinfo.pjtblockchain.client.service.TransactionService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.cli.*;
 import org.apache.commons.codec.binary.Base64;
@@ -31,26 +34,20 @@ import static java.lang.System.exit;
  */
 @Slf4j
 @SpringBootApplication
-@PropertySource("file:${application_home}/config/blockchain.properties")
+@PropertySource("file:${application_home}/config/wallet.properties")
 public class BlockchainWalletApplication implements CommandLineRunner {
 
     @Autowired
-    BlockchainWalletService blockchainWallet;
+    TransactionService transactionService;
 
-    @Value("${key.private:key.priv}")
-    private String privateKey;
+    @Autowired
+    AddressService addressService;
 
-    @Value("${key.public:key.pub}")
-    private String publicKey;
+    @Autowired
+    CryptoService cryptoService;
 
-    @Value("${node.local.ip:localhost}")
-    private String localNodeIp;
-
-    @Value("${node.local.port:8080}")
-    private int localNodePort;
-
-    @Value("${node.local.path:/}")
-    private String localNodePath;
+    @Value("${node.local.address:http://127.0.0.1:8080/}")
+    private String localNodeAddress;
 
     static URL localNode;
 
@@ -72,7 +69,7 @@ public class BlockchainWalletApplication implements CommandLineRunner {
     @Override
     public void run(String[] args) throws Exception {
         // Create the local node Url
-        localNode = new URL("http", localNodeIp, localNodePort, localNodePath);
+        localNode = new URL(localNodeAddress);
         log.info("Started the wallet with the node {}", localNode);
 
         // Parse and execute the command
@@ -97,7 +94,7 @@ public class BlockchainWalletApplication implements CommandLineRunner {
      */
     private void executeCommand(CommandLine line) throws Exception {
         if (line.hasOption("keypair")) {
-            blockchainWallet.generateKeyPair(privateKey, publicKey);
+            cryptoService.generateKeyPair();
 
         } else if (line.hasOption("address")) {
             publishAddress(line);
@@ -161,10 +158,10 @@ public class BlockchainWalletApplication implements CommandLineRunner {
         if (name == null) {
             throw new ParseException("name is required");
         }
-        if(!(new File(Paths.get(publicKey).toUri()).exists())) {
-            throw new ParseException("publickey not found with the value : " + publicKey);
+        if(!cryptoService.keyExists()) {
+            throw new ParseException("publickey not found at " + cryptoService.getPublicKey().getAbsolutePath());
         }
-        blockchainWallet.publishAddress(localNode, Paths.get(publicKey), name);
+        addressService.publishAddress(localNode, cryptoService.getPublicKey().toPath(), name);
     }
 
     /**
@@ -179,9 +176,9 @@ public class BlockchainWalletApplication implements CommandLineRunner {
         if (message == null || sender == null || amount == null || receiver == null) {
             throw new ParseException(" message, amount, sender, receiver is required");
         }
-        if(!(new File(Paths.get(privateKey).toUri()).exists())) {
-            throw new ParseException("privatekey not found with the value : " + privateKey);
+        if(!cryptoService.keyExists()) {
+            throw new ParseException("privatekey not found at " + cryptoService.getPrivateKey().getAbsolutePath());
         }
-        blockchainWallet.publishTransaction(localNode, Paths.get(privateKey), message, Base64.decodeBase64(sender), Base64.decodeBase64(receiver), amount);
+        transactionService.publishTransaction(localNode, cryptoService.getPrivateKey().toPath(), message, Base64.decodeBase64(sender), Base64.decodeBase64(receiver), amount);
     }
 }

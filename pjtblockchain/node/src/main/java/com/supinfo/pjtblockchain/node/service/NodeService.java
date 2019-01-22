@@ -5,6 +5,7 @@ import com.supinfo.pjtblockchain.common.domain.Node;
 import com.supinfo.pjtblockchain.node.Config;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,9 @@ public class NodeService implements ApplicationListener<WebServerInitializedEven
     private Node self;
     private Set<Node> knownNodes = new HashSet<>();
     private RestTemplate restTemplate = new RestTemplate();
+
+    @Value("${master.node.address:http://127.0.0.1:8080/}")
+    private String masterNode;
 
     @Autowired
     public NodeService(BlockService blockService, TransactionService transactionService, AddressService addressService) {
@@ -141,7 +145,7 @@ public class NodeService implements ApplicationListener<WebServerInitializedEven
 
     private Node getMasterNode() {
         try {
-            return new Node(new URL(Config.MASTER_NODE_ADDRESS));
+            return new Node(new URL(masterNode));
         } catch (MalformedURLException e) {
             log.error("Invalid master node URL", e);
             return new Node();
