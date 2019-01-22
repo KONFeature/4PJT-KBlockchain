@@ -6,4 +6,4 @@
 # ----------------------------------------------------------------------------
 
 export APPLICATION_HOME=.
-java -jar bin/com.supinfo-node-0.0.1-SNAPSHOT.jar "$@"
+java -jar bin/com.supinfo-node-0.0.2-SNAPSHOT.jar "$@"
