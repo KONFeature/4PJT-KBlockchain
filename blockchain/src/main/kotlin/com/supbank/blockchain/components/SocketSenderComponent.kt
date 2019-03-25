@@ -1,10 +1,12 @@
 package com.supbank.blockchain.components
 
+import com.google.gson.Gson
 import com.supbank.blockchain.models.Node
 import com.supbank.blockchain.pojo.NodePojo
 import com.supbank.blockchain.repos.NodeRepository
-import com.supbank.blockchain.utils.Request
+import com.supbank.blockchain.utils.RequestHeader
 import io.reactivex.schedulers.Schedulers
+import io.rsocket.kotlin.DefaultPayload
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketFactory
 import io.rsocket.kotlin.transport.netty.client.WebsocketClientTransport
@@ -52,7 +54,6 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
             return
         }
 
-
         RSocketFactory
                 .connect()
                 .acceptor { { rSocket -> handle(rSocket) } }
@@ -64,10 +65,29 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
                 .observeOn(Schedulers.io())
                 .subscribe({ rSocket ->
                     log.info("Adding client socket on node {}", node)
-                    clients[node] = rSocket
-                    nodeRepository.save(Node(node.host, node.port))
+                    declareItself(rSocket) {
+                        clients[node] = rSocket
+                        nodeRepository.save(Node(node.host, node.port))
+                    }
                 }, { error ->
                     log.warn("Error when initialising the client on node {} : {}", node, error)
+                })
+    }
+
+    /**
+     * Function used to send the server ip to the node
+     */
+    private fun declareItself(socket: RSocket, success: () -> Unit) {
+        // TODO : Find the visible ip address for the socket
+        socket.fireAndForget(DefaultPayload.text(RequestHeader.DECLARE_ITSELFT.data, "monip"))
+                .observeOn(Schedulers.io())
+                .subscribe({
+                    // Complete
+                    log.info("Node declared to the other node")
+                    success.invoke()
+                }, {error ->
+                    // Error
+                    log.warn("Error when declaring itself to the other node {}", error)
                 })
     }
 
@@ -75,7 +95,7 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
      * Try to fetch all the network node on the address
      */
     fun fetchAddress() {
-        clients.entries.forEach { entry ->
+        clients.forEach { entry ->
             log.info("Fetching addresses from node {}", entry.key)
 
             // If we doesn't have fetch address on this node yet we try it and leave after
@@ -91,20 +111,19 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
      */
     private fun requestNodeKnownAddresses(node: NodePojo, socket: RSocket) {
         // Construct list of known nodes to prevent the server to send nodes that we already have
-        var knownNodes = ArrayList<NodePojo>()
+        val knownNodes = ArrayList<NodePojo>()
         nodeRepository.findAll().forEach { dbNode ->
             NodePojo.fromNode(dbNode)?.let { knownNodes.add(it) }
         }
 
-
-        socket.requestStream(Request.LIST_NODES.payload)
+        socket.requestStream(DefaultPayload.text(RequestHeader.LIST_NODES.data, Gson().toJson(knownNodes)))
                 .observeOn(Schedulers.io())
                 .subscribe({ payload ->
                     // Next
                     val parsedNode = NodePojo.fromPayload(payload) // Parse the node pojo
                     parsedNode?.let { newNode ->
                         log.info("Successfully received new node address {}", newNode)
-                        addClient(newNode) // Add the node p    ojo
+                        addClient(newNode) // Add the node pojo
                     } ?: run {
                         log.warn("Unable to parse node from {} : {}->{}", node, payload.dataUtf8, payload.metadataUtf8)
                     }
@@ -129,4 +148,18 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
             object : AbstractRSocket() {
 
             }
+
+    /**
+     * Function used to broadcast a message to all socket
+     */
+    fun broadcast(text: String, data: String) {
+        clients.forEach { entry ->
+            log.info("Sending broadcast on socket {}", entry.key)
+            entry.value.fireAndForget(DefaultPayload.text(text, data))
+                    .observeOn(Schedulers.io())
+                    .subscribe {
+                        log.info("Response received from socket {} : {}", entry.key)
+                    }
+        }
+    }
 }

@@ -1,7 +1,9 @@
 package com.supbank.blockchain.utils
 
-import io.rsocket.kotlin.DefaultPayload
-
-enum class Request(val payload: io.rsocket.kotlin.Payload) {
-    LIST_NODES(DefaultPayload.text("list_nodes"))
+enum class RequestHeader(val data: String) {
+    DECLARE_ITSELFT("declare_itselft"),
+    LIST_NODES("list_nodes"),
+    FETCH_BLOCKCHAIN("fetch_blockchain"),
+    PUBLISH_TRANSACTION("publish_transaction"),
+    PUBLISH_BLOCK("publish_block")
 }

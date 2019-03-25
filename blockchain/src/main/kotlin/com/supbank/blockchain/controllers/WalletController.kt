@@ -1,5 +1,8 @@
 package com.supbank.blockchain.controllers
 
+import com.supbank.blockchain.components.SocketSenderComponent
+import org.slf4j.Logger
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -8,5 +11,13 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/wallet")
-class WalletController {
+class WalletController(private val sender: SocketSenderComponent,
+                       private val log: Logger) {
+
+    @GetMapping("/publish")
+    fun addTransaction() : String {
+        sender.broadcast("publish_transaction", "50 balles")
+        return "To implement"
+    }
+
 }

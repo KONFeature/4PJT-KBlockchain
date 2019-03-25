@@ -1,8 +1,10 @@
 package com.supbank.blockchain.components
 
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.supbank.blockchain.pojo.NodePojo
 import com.supbank.blockchain.repos.NodeRepository
-import com.supbank.blockchain.utils.Request
+import com.supbank.blockchain.utils.RequestHeader
 import io.reactivex.*
 import io.reactivex.schedulers.Schedulers
 import io.rsocket.kotlin.*
@@ -13,6 +15,7 @@ import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.lang.NullPointerException
+import java.lang.reflect.Type
 import javax.annotation.PostConstruct
 
 /**
@@ -20,6 +23,7 @@ import javax.annotation.PostConstruct
  */
 @Component
 class SocketReceiverComponent(private var nodeRepository: NodeRepository,
+                              private var socketSender: SocketSenderComponent,
                               private val log: Logger) {
 
     // Server that receive the request
@@ -54,7 +58,7 @@ class SocketReceiverComponent(private var nodeRepository: NodeRepository,
     private fun handle(setup: Setup, rSocket: RSocket): Single<RSocket> = Single.just(object : AbstractRSocket() {
 
         override fun fireAndForget(payload: Payload): Completable {
-            log.debug("Server received f&f, payload {}->{}", payload.dataUtf8, payload.metadataUtf8)
+            log.info("Server received f&f, payload {}->{}", payload.dataUtf8, payload.metadataUtf8)
             return Completable.complete()
         }
 
@@ -64,34 +68,41 @@ class SocketReceiverComponent(private var nodeRepository: NodeRepository,
         }
 
         override fun requestStream(payload: Payload): Flowable<Payload> {
-            log.debug("Server received rs payload {}->{}", payload.dataUtf8, payload.metadataUtf8)
+            log.info("Server received rs payload {}->{}", payload.dataUtf8, payload.metadataUtf8)
 
-            when(payload.dataUtf8) {
+            return when(payload.dataUtf8) {
                 // The client ask the server to list all the known nodes
-                Request.LIST_NODES.payload.dataUtf8 -> {
-                    return Flowable.create({ emitter ->
-                        // Return local node
-                        server?.let {
-                            emitter.onNext(DefaultPayload.text(NodePojo.TITLE, NodePojo(it.address().hostString, it.address().port).json()))
-                        }
-
-                        // Return node in db
-                        nodeRepository.findAll().forEach { node ->
-                            NodePojo.fromNode(node)?.let {pojo ->
-                                emitter.onNext(DefaultPayload.text(NodePojo.TITLE, pojo.json()))
-                            }?:run {
-                                emitter.onError(NullPointerException("Unable to parse node to pojo"))
-                            }
-                        }
-                        emitter.onComplete()
-                    }, BackpressureStrategy.BUFFER)
+                RequestHeader.LIST_NODES.data -> {
+                    listKnowNodes(payload)
                 }
                 else -> {
                     log.warn("Unknown payload request {}->{}", payload.dataUtf8, payload.metadataUtf8)
-                    return Flowable.just(DefaultPayload.text("Server doesn't recognize request"))
+                    Flowable.just(DefaultPayload.text("Server doesn't recognize request"))
                 }
             }
         }
-
     })
+
+    /**
+     * Function used to return a flowable of all the know nodes by this server
+     */
+    private fun listKnowNodes(payload: Payload) : Flowable<Payload> {
+        // Find all the know nodes of the requester to prevent sending them
+        val type = object: TypeToken<ArrayList<NodePojo>>() {}.type
+        val askerKnowNodes = Gson().fromJson<ArrayList<NodePojo>>(payload.metadataUtf8, type)
+
+        return Flowable.create({ emitter ->
+            // Return node in db
+            nodeRepository.findAll().forEach { node ->
+                NodePojo.fromNode(node)?.let {pojo ->
+                    if(!askerKnowNodes.contains(pojo)) {
+                        emitter.onNext(DefaultPayload.text(NodePojo.TITLE, pojo.json()))
+                    }
+                }?:run {
+                    emitter.onError(NullPointerException("Unable to parse node to pojo"))
+                }
+            }
+            emitter.onComplete()
+        }, BackpressureStrategy.BUFFER)
+    }
 }
