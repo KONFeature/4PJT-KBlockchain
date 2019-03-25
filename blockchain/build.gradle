@@ -32,9 +32,12 @@ dependencies {
 	// H2 Db
 	runtimeOnly 'com.h2database:h2'
 
-	// Socket IO
+	// RSocket IO
 	compile 'io.rsocket.kotlin:rsocket-core:0.9.6'
 	compile 'io.rsocket.kotlin:rsocket-transport-netty:0.9.6'
+
+	// GSON
+	implementation 'com.google.code.gson:gson:2.8.5'
 
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
