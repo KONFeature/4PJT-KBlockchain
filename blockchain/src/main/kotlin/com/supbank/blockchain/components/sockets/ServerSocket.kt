@@ -28,7 +28,7 @@ class ServerSocket(val log: Logger): AbstractRSocket() {
 
     override fun requestResponse(payload: Payload): Single<Payload> {
         log.info("Server received rr, payload {}", payload.dataUtf8)
-        return Single.just(DefaultPayload.text("client handler response"))
+        return Single.just(DefaultPayload.text("server handler response"))
     }
 
     override fun requestStream(payload: Payload): Flowable<Payload> {
