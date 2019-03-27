@@ -3,6 +3,8 @@ package com.supbank.blockchain.components
 import com.google.gson.Gson
 import com.supbank.blockchain.pojo.NodePojo
 import com.supbank.blockchain.repos.NodeRepository
+import com.supbank.blockchain.utils.P2pException
+import com.supbank.blockchain.utils.p2p.NewNodePayload
 import com.supbank.blockchain.utils.p2p.NodesPayload
 import com.supbank.blockchain.utils.p2p.P2pPayload
 import io.reactivex.*
@@ -20,8 +22,7 @@ import javax.annotation.PostConstruct
  * Server socket, receive all the request comming from the node
  */
 @Component
-class SocketReceiverComponent(private var nodeRepository: NodeRepository,
-                              private var socketSender: SocketSenderComponent,
+class SocketReceiverComponent(private var socketSender: SocketSenderComponent,
                               private val log: Logger) {
 
     // Server that receive the request
@@ -57,12 +58,20 @@ class SocketReceiverComponent(private var nodeRepository: NodeRepository,
 
         override fun fireAndForget(payload: Payload): Completable {
             log.debug("Server received f&f, get {}->{}", payload.dataUtf8, payload.metadataUtf8)
-            return Completable.complete()
+
+            return if(P2pPayload.isNewNode(payload)) {
+                // Received new node
+                val node = Gson().fromJson(payload.dataUtf8, NodePojo::class.java)
+                socketSender.addClient(node)
+                Completable.complete()
+            } else {
+                Completable.error(P2pException.unknownOperationException(payload))
+            }
         }
 
         override fun requestResponse(payload: Payload): Single<Payload> {
             log.debug("Server received rr, get {}->{}", payload.dataUtf8, payload.metadataUtf8)
-            return Single.just(DefaultPayload.text("server handler response"))
+            return Single.error(P2pException.unknownOperationException(payload))
         }
 
         override fun requestStream(payload: Payload): Flowable<Payload> {
@@ -74,7 +83,7 @@ class SocketReceiverComponent(private var nodeRepository: NodeRepository,
             } else {
                 // Unknown operation request
                 log.warn("Unknown get request {}->{}", payload.dataUtf8, payload.metadataUtf8)
-                Flowable.just(DefaultPayload.text("Server doesn't recognize request"))
+                Flowable.error<Payload>(P2pException.unknownOperationException(payload))
             }
         }
     })
@@ -83,20 +92,30 @@ class SocketReceiverComponent(private var nodeRepository: NodeRepository,
      * Handle join request
      */
     private fun joinResponse(payload: Payload) : Flowable<Payload> {
-        // TODO : Broadcast all node the new node that join
         val requesterNode = Gson().fromJson(payload.dataUtf8, NodePojo::class.java)
 
+        // Saving new node
+        socketSender.addClient(requesterNode)
+
+        // Send the new node to other node
+        socketSender.broadcastFf(NewNodePayload(requesterNode).get())
+
+        // Return known node to new node
         return Flowable.create({ emitter ->
             // Find all the node in DB, and send them (size limit to prevent network overload)
-            val nodes = nodeRepository.findAll().iterator()
+            val nodes = socketSender.nodes().iterator()
             val toSend = ArrayList<NodePojo>()
             while (nodes.hasNext()) {
                 if(toSend.size >= NodesPayload.arraySize) {
                     emitter.onNext(NodesPayload(toSend).get())
                     toSend.clear()
                 }
-                toSend.add(NodePojo.fromNode(nodes.next()))
+                toSend.add(nodes.next())
             }
+
+            // If we have nodes not send we s end them now
+            if(toSend.isNotEmpty())
+                emitter.onNext(NodesPayload(toSend).get())
 
             // TODO : Return blockchain, transactions and wallets status
             emitter.onComplete()

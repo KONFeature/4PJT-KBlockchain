@@ -7,8 +7,9 @@ import com.supbank.blockchain.repos.NodeRepository
 import com.supbank.blockchain.utils.p2p.JoinPayload
 import com.supbank.blockchain.utils.p2p.NodesPayload
 import com.supbank.blockchain.utils.p2p.P2pPayload
+import io.reactivex.Completable
 import io.reactivex.schedulers.Schedulers
-import io.rsocket.kotlin.DefaultPayload
+import io.rsocket.kotlin.Payload
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketFactory
 import io.rsocket.kotlin.transport.netty.client.WebsocketClientTransport
@@ -16,20 +17,18 @@ import io.rsocket.kotlin.util.AbstractRSocket
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import java.net.Inet4Address
+import java.net.Inet6Address
 import javax.annotation.PostConstruct
 
 /**
  * List of socket connected to the node
  */
 @Component
-class SocketSenderComponent(private var nodeRepository: NodeRepository,
-                            private val log: Logger) {
+class SocketSenderComponent(private val log: Logger) {
 
     // Map of all the socket clients
     private var clients: HashMap<NodePojo, RSocket> = HashMap()
-
-    // Current node for fetching the address
-    private var fetchedNode: ArrayList<NodePojo> = ArrayList()
 
     @Value("\${blockchain.known.node.host}")
     lateinit var knownHost: String
@@ -37,10 +36,10 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
     @Value("\${blockchain.known.node.port}")
     var knownPort: Int = 0
 
-    @Value("\${blockchain.accessible.host}")
+    @Value("\${p2p.accessible.host}")
     lateinit var accessibleHost: String
 
-    @Value("\${blockchain.accessible.port}")
+    @Value("\${p2p.port}")
     var accessiblePort: Int = 0
 
     /**
@@ -48,9 +47,6 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
      */
     @PostConstruct
     private fun init() {
-        // Clean all the known node before when launching the server
-        nodeRepository.deleteAll()
-
         // Send join request to the known node
         RSocketFactory
                 .connect()
@@ -76,10 +72,9 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
      */
     private fun join(socket: RSocket) {
         socket.requestStream(JoinPayload(NodePojo(accessibleHost, accessiblePort)).get())
-                .doOnNext {payload ->
-                    // Receive new get for the join request
-                    log.debug("New get received from the join request {}:{}", payload.metadataUtf8, payload.dataUtf8)
-                    if(P2pPayload.isNodes(payload)) {
+                .doOnNext { payload ->
+                    // Receive new get for the join request*
+                    if (P2pPayload.isNodes(payload)) {
                         // Parse the list of node
                         val nodes = Gson().fromJson<ArrayList<NodePojo>>(payload.dataUtf8, NodesPayload.type)
                         log.info("Received list of nodes of the network {}", nodes)
@@ -87,7 +82,7 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
                     }
                 }.doOnComplete {
                     log.info("End of the join request")
-                }.doOnError {error ->
+                }.doOnError { error ->
                     log.error("Error when joining the known node on the network {}", error)
                 }.subscribeOn(Schedulers.io()).subscribe()
     }
@@ -95,19 +90,19 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
     /**
      * Function used to add a client to the list
      */
-    private fun addClient(node: NodePojo) {
+    fun addClient(node: NodePojo) {
         if (clients.containsKey(node)) {
             log.warn("Client already known, aborting the adding request")
             return
         }
 
-//        if(Inet4Address.getLocalHost().hostAddress.equals(node.host, true) ||
-//                Inet6Address.getLocalHost().hostAddress.equals(node.host, true) ||
-//                Inet4Address.getLoopbackAddress().hostAddress.equals(node.host, true) ||
-//                Inet6Address.getLoopbackAddress().hostAddress.equals(node.host, true)) {
-//            log.warn("Trying to add localhost or loopback address, aborting")
-//            return
-//        }
+        if(Inet4Address.getLocalHost().hostAddress.equals(node.host, true) ||
+                Inet6Address.getLocalHost().hostAddress.equals(node.host, true) ||
+                Inet4Address.getLoopbackAddress().hostAddress.equals(node.host, true) ||
+                Inet6Address.getLoopbackAddress().hostAddress.equals(node.host, true)) {
+            log.warn("Trying to add localhost or loopback address, aborting")
+            return
+        }
 
         RSocketFactory
                 .connect()
@@ -120,7 +115,6 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
                 .doOnSuccess { rSocket ->
                     log.info("Adding client socket for node {}", node)
                     clients[node] = rSocket
-                    nodeRepository.save(Node(node.host, node.port))
                 }.doOnError { error ->
                     log.warn("Error when initialising the client on node {} : {}", node, error)
                 }.subscribeOn(Schedulers.io()).subscribe()
@@ -132,20 +126,34 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
      */
     private fun handle(rSocket: RSocket) =
             object : AbstractRSocket() {
-
+                override fun close(): Completable {
+                    // Find the nodes to remove and remove them
+                    val nodes = clients.filter { entry -> entry.value == rSocket }.keys
+                    nodes.forEach { node ->
+                        clients.remove(node)
+                        log.info("Node {} leave the network", node)
+                    }
+                    return super.close()
+                }
             }
 
     /**
-     * Function used to broadcast a message to all socket
+     * Function used to broadcastFf a message to all socket
      */
-    fun broadcast(text: String, data: String) {
+    fun broadcastFf(payload: Payload) {
         clients.forEach { entry ->
-            log.info("Sending broadcast on socket {}", entry.key)
-            entry.value.fireAndForget(DefaultPayload.text(text, data))
-                    .observeOn(Schedulers.io())
-                    .subscribe {
-                        log.info("Response received from socket {} : {}", entry.key)
-                    }
+            log.debug("Sending the \"{}\" broadcast to node {}", payload.metadataUtf8, entry.key)
+            entry.value.fireAndForget(payload)
+                    .doOnComplete {
+                        log.debug("Successfully send the \"{}\" broadcast to the node {}", payload.metadataUtf8, entry.key)
+                    }.doOnError {error ->
+                        log.warn("Error when sending the \"{}\" broadcast to the node {} : {}", payload.metadataUtf8, entry.key, error)
+                    }.subscribeOn(Schedulers.io()).subscribe()
         }
     }
+
+    /**
+     * Function use to list all the node of this current server
+     */
+    fun nodes() = clients.keys.toList()
 }

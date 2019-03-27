@@ -16,7 +16,6 @@ class WalletController(private val sender: SocketSenderComponent,
 
     @GetMapping("/publish")
     fun addTransaction() : String {
-        sender.broadcast("publish_transaction", "50 balles")
         return "To implement"
     }
 
