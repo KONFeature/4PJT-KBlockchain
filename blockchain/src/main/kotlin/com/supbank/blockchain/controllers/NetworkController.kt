@@ -23,7 +23,6 @@ class NetworkController(private val sender: SocketSenderComponent,
      */
     @GetMapping("/join")
     fun joinNetwork() : String {
-        sender.fetchAddress()
         return "To implement"
     }
 

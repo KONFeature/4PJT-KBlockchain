@@ -1,10 +1,10 @@
 package com.supbank.blockchain.components
 
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.supbank.blockchain.pojo.NodePojo
 import com.supbank.blockchain.repos.NodeRepository
-import com.supbank.blockchain.utils.RequestHeader
+import com.supbank.blockchain.utils.p2p.NodesPayload
+import com.supbank.blockchain.utils.p2p.P2pPayload
 import io.reactivex.*
 import io.reactivex.schedulers.Schedulers
 import io.rsocket.kotlin.*
@@ -14,8 +14,6 @@ import io.rsocket.kotlin.util.AbstractRSocket
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.lang.NullPointerException
-import java.lang.reflect.Type
 import javax.annotation.PostConstruct
 
 /**
@@ -58,50 +56,49 @@ class SocketReceiverComponent(private var nodeRepository: NodeRepository,
     private fun handle(setup: Setup, rSocket: RSocket): Single<RSocket> = Single.just(object : AbstractRSocket() {
 
         override fun fireAndForget(payload: Payload): Completable {
-            log.info("Server received f&f, payload {}->{}", payload.dataUtf8, payload.metadataUtf8)
+            log.debug("Server received f&f, get {}->{}", payload.dataUtf8, payload.metadataUtf8)
             return Completable.complete()
         }
 
         override fun requestResponse(payload: Payload): Single<Payload> {
-            log.debug("Server received rr, payload {}->{}", payload.dataUtf8, payload.metadataUtf8)
+            log.debug("Server received rr, get {}->{}", payload.dataUtf8, payload.metadataUtf8)
             return Single.just(DefaultPayload.text("server handler response"))
         }
 
         override fun requestStream(payload: Payload): Flowable<Payload> {
-            log.info("Server received rs payload {}->{}", payload.dataUtf8, payload.metadataUtf8)
+            log.debug("Server received rs get {}->{}", payload.dataUtf8, payload.metadataUtf8)
 
-            return when(payload.dataUtf8) {
-                // The client ask the server to list all the known nodes
-                RequestHeader.LIST_NODES.data -> {
-                    listKnowNodes(payload)
-                }
-                else -> {
-                    log.warn("Unknown payload request {}->{}", payload.dataUtf8, payload.metadataUtf8)
-                    Flowable.just(DefaultPayload.text("Server doesn't recognize request"))
-                }
+            return if(P2pPayload.isJoin(payload)) {
+                // Received a join request
+                joinResponse(payload)
+            } else {
+                // Unknown operation request
+                log.warn("Unknown get request {}->{}", payload.dataUtf8, payload.metadataUtf8)
+                Flowable.just(DefaultPayload.text("Server doesn't recognize request"))
             }
         }
     })
 
     /**
-     * Function used to return a flowable of all the know nodes by this server
+     * Handle join request
      */
-    private fun listKnowNodes(payload: Payload) : Flowable<Payload> {
-        // Find all the know nodes of the requester to prevent sending them
-        val type = object: TypeToken<ArrayList<NodePojo>>() {}.type
-        val askerKnowNodes = Gson().fromJson<ArrayList<NodePojo>>(payload.metadataUtf8, type)
+    private fun joinResponse(payload: Payload) : Flowable<Payload> {
+        // TODO : Broadcast all node the new node that join
+        val requesterNode = Gson().fromJson(payload.dataUtf8, NodePojo::class.java)
 
         return Flowable.create({ emitter ->
-            // Return node in db
-            nodeRepository.findAll().forEach { node ->
-                NodePojo.fromNode(node)?.let {pojo ->
-                    if(!askerKnowNodes.contains(pojo)) {
-                        emitter.onNext(DefaultPayload.text(NodePojo.TITLE, pojo.json()))
-                    }
-                }?:run {
-                    emitter.onError(NullPointerException("Unable to parse node to pojo"))
+            // Find all the node in DB, and send them (size limit to prevent network overload)
+            val nodes = nodeRepository.findAll().iterator()
+            val toSend = ArrayList<NodePojo>()
+            while (nodes.hasNext()) {
+                if(toSend.size >= NodesPayload.arraySize) {
+                    emitter.onNext(NodesPayload(toSend).get())
+                    toSend.clear()
                 }
+                toSend.add(NodePojo.fromNode(nodes.next()))
             }
+
+            // TODO : Return blockchain, transactions and wallets status
             emitter.onComplete()
         }, BackpressureStrategy.BUFFER)
     }

@@ -4,7 +4,9 @@ import com.google.gson.Gson
 import com.supbank.blockchain.models.Node
 import com.supbank.blockchain.pojo.NodePojo
 import com.supbank.blockchain.repos.NodeRepository
-import com.supbank.blockchain.utils.RequestHeader
+import com.supbank.blockchain.utils.p2p.JoinPayload
+import com.supbank.blockchain.utils.p2p.NodesPayload
+import com.supbank.blockchain.utils.p2p.P2pPayload
 import io.reactivex.schedulers.Schedulers
 import io.rsocket.kotlin.DefaultPayload
 import io.rsocket.kotlin.RSocket
@@ -14,9 +16,6 @@ import io.rsocket.kotlin.util.AbstractRSocket
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.net.Inet4Address
-import java.net.Inet6Address
-import java.net.InetAddress
 import javax.annotation.PostConstruct
 
 /**
@@ -38,6 +37,12 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
     @Value("\${blockchain.known.node.port}")
     var knownPort: Int = 0
 
+    @Value("\${blockchain.accessible.host}")
+    lateinit var accessibleHost: String
+
+    @Value("\${blockchain.accessible.port}")
+    var accessiblePort: Int = 0
+
     /**
      * Init the base client connexion to a known host
      */
@@ -45,7 +50,46 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
     private fun init() {
         // Clean all the known node before when launching the server
         nodeRepository.deleteAll()
-        addClient(NodePojo(knownHost, knownPort))
+
+        // Send join request to the known node
+        RSocketFactory
+                .connect()
+                .acceptor { { rSocket -> handle(rSocket) } }
+                .transport {
+                    WebsocketClientTransport
+                            .create(knownHost, knownPort)
+                }
+                .start()
+                .observeOn(Schedulers.io())
+                .subscribe({ rSocket ->
+                    log.info("Sending join request on known node {}:{}", knownHost, knownPort)
+                    join(rSocket)
+                }, { error ->
+                    log.warn("Error when sending join request to the known node {}:{}, {}", knownHost, knownPort, error)
+                })
+
+//        addClient(NodePojo(knownHost, knownPort))
+    }
+
+    /**
+     * Function used to send the server ip to the node
+     */
+    private fun join(socket: RSocket) {
+        socket.requestStream(JoinPayload(NodePojo(accessibleHost, accessiblePort)).get())
+                .doOnNext {payload ->
+                    // Receive new get for the join request
+                    log.debug("New get received from the join request {}:{}", payload.metadataUtf8, payload.dataUtf8)
+                    if(P2pPayload.isNodes(payload)) {
+                        // Parse the list of node
+                        val nodes = Gson().fromJson<ArrayList<NodePojo>>(payload.dataUtf8, NodesPayload.type)
+                        log.info("Received list of nodes of the network {}", nodes)
+                        nodes.forEach { node -> addClient(node) }
+                    }
+                }.doOnComplete {
+                    log.info("End of the join request")
+                }.doOnError {error ->
+                    log.error("Error when joining the known node on the network {}", error)
+                }.subscribeOn(Schedulers.io()).subscribe()
     }
 
     /**
@@ -73,83 +117,13 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
                             .create(node.host, node.port)
                 }
                 .start()
-                .observeOn(Schedulers.io())
-                .subscribe({ rSocket ->
-                    log.info("Adding client socket on node {}", node)
-                    declareItself(rSocket) {
-                        clients[node] = rSocket
-                        nodeRepository.save(Node(node.host, node.port))
-                    }
-                }, { error ->
+                .doOnSuccess { rSocket ->
+                    log.info("Adding client socket for node {}", node)
+                    clients[node] = rSocket
+                    nodeRepository.save(Node(node.host, node.port))
+                }.doOnError { error ->
                     log.warn("Error when initialising the client on node {} : {}", node, error)
-                })
-    }
-
-    /**
-     * Function used to send the server ip to the node
-     */
-    private fun declareItself(socket: RSocket, success: () -> Unit) {
-        // TODO : Find the visible ip address for the socket
-        socket.fireAndForget(DefaultPayload.text(RequestHeader.DECLARE_ITSELFT.data, "monip"))
-                .observeOn(Schedulers.io())
-                .subscribe({
-                    // Complete
-                    log.info("Node declared to the other node")
-                    success.invoke()
-                }, {error ->
-                    // Error
-                    log.warn("Error when declaring itself to the other node {}", error)
-                })
-    }
-
-    /**
-     * Try to fetch all the network node on the address
-     */
-    fun fetchAddress() {
-        clients.forEach { entry ->
-
-            // If we doesn't have fetch address on this node yet we try it and leave after
-            if (!fetchedNode.contains(entry.key)) {
-                log.info("Fetching addresses from node {}", entry.key)
-                requestNodeKnownAddresses(entry.key, entry.value)
-                return
-            }
-        }
-    }
-
-    /**
-     * Function used to request a node all the address he known
-     */
-    private fun requestNodeKnownAddresses(node: NodePojo, socket: RSocket) {
-        // Construct list of known nodes to prevent the server to send nodes that we already have
-        val knownNodes = ArrayList<NodePojo>()
-        nodeRepository.findAll().forEach { dbNode ->
-            NodePojo.fromNode(dbNode)?.let { knownNodes.add(it) }
-        }
-
-        // Request the known node
-        socket.requestStream(DefaultPayload.text(RequestHeader.LIST_NODES.data, Gson().toJson(knownNodes)))
-                .observeOn(Schedulers.io())
-                .subscribe({ payload ->
-                    // Next
-                    val parsedNode = NodePojo.fromPayload(payload) // Parse the node pojo
-                    parsedNode?.let { newNode ->
-                        log.info("Successfully received new node address {}", newNode)
-                        addClient(newNode) // Add the node pojo
-                    } ?: run {
-                        log.warn("Unable to parse node from {} : {}->{}", node, payload.dataUtf8, payload.metadataUtf8)
-                    }
-                }, { error ->
-                    // Error
-                    log.warn("Error when fetching addresses from node {} : {}", node, error)
-                    fetchedNode.add(node)
-                    fetchAddress()
-                }, {
-                    // Complete
-                    log.info("Fetched all the known node of node {}", node)
-                    fetchedNode.add(node)
-                    fetchAddress()
-                })
+                }.subscribeOn(Schedulers.io()).subscribe()
     }
 
     /**
