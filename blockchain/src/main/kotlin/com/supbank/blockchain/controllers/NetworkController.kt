@@ -1,7 +1,7 @@
 package com.supbank.blockchain.controllers
 
-import com.supbank.blockchain.components.NetworkComponent
-import com.supbank.blockchain.models.Client
+import com.supbank.blockchain.components.SocketSenderComponent
+import com.supbank.blockchain.models.Node
 import org.slf4j.Logger
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -13,17 +13,16 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 @RequestMapping("/network")
-class NetworkController(private val network: NetworkComponent,
+class NetworkController(private val sender: SocketSenderComponent,
                         private val log: Logger) {
 
-    var clients = ArrayList<Client>()
+    var clients = ArrayList<Node>()
 
     /**
      * Join the blockchain network
      */
     @GetMapping("/join")
     fun joinNetwork() : String {
-        network.send("connect")
         return "To implement"
     }
 
@@ -32,7 +31,6 @@ class NetworkController(private val network: NetworkComponent,
      */
     @GetMapping("/broadcast")
     fun broadcastNetwork() : String {
-        network.broadcast("broadcast")
         return "To implement"
     }
 

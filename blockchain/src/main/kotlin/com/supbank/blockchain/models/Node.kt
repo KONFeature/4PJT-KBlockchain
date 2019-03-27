@@ -1,12 +1,14 @@
 package com.supbank.blockchain.models
 
-import java.net.InetAddress
 import javax.persistence.*
 
 @Entity
-data class Client(
+data class Node(
         @Column
-        val addr: InetAddress
+        val host: String,
+
+        @Column
+        val port: Int
 )
 {
     @Id
