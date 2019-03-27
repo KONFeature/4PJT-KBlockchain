@@ -1,8 +1,27 @@
 package com.supbank.blockchain.models
 
-data class Block(val prevHash: ByteArray,
-                 val hash: ByteArray,
-                 val sender: ByteArray,
-                 var receiver: ByteArray,
-                 var amount: Int,
-                 var message: String)
+import javax.persistence.*
+
+@Entity
+data class Block(
+        @Column
+        val prevHash: ByteArray,
+
+        @Column
+        val hash: ByteArray,
+
+        @Column
+        val merkleRoot: ByteArray,
+
+        @Column
+        val transactions: List<Transaction>,
+
+        @Column
+        val difficulty: Long,
+
+        @Column
+        val timestamp: Long) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    var id: Long = 0
+}
