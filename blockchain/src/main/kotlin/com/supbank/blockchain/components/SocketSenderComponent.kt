@@ -14,6 +14,9 @@ import io.rsocket.kotlin.util.AbstractRSocket
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import java.net.Inet4Address
+import java.net.Inet6Address
+import java.net.InetAddress
 import javax.annotation.PostConstruct
 
 /**
@@ -53,6 +56,14 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
             log.warn("Client already known, aborting the adding request")
             return
         }
+
+//        if(Inet4Address.getLocalHost().hostAddress.equals(node.host, true) ||
+//                Inet6Address.getLocalHost().hostAddress.equals(node.host, true) ||
+//                Inet4Address.getLoopbackAddress().hostAddress.equals(node.host, true) ||
+//                Inet6Address.getLoopbackAddress().hostAddress.equals(node.host, true)) {
+//            log.warn("Trying to add localhost or loopback address, aborting")
+//            return
+//        }
 
         RSocketFactory
                 .connect()
@@ -96,10 +107,10 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
      */
     fun fetchAddress() {
         clients.forEach { entry ->
-            log.info("Fetching addresses from node {}", entry.key)
 
             // If we doesn't have fetch address on this node yet we try it and leave after
             if (!fetchedNode.contains(entry.key)) {
+                log.info("Fetching addresses from node {}", entry.key)
                 requestNodeKnownAddresses(entry.key, entry.value)
                 return
             }
@@ -116,6 +127,7 @@ class SocketSenderComponent(private var nodeRepository: NodeRepository,
             NodePojo.fromNode(dbNode)?.let { knownNodes.add(it) }
         }
 
+        // Request the known node
         socket.requestStream(DefaultPayload.text(RequestHeader.LIST_NODES.data, Gson().toJson(knownNodes)))
                 .observeOn(Schedulers.io())
                 .subscribe({ payload ->
