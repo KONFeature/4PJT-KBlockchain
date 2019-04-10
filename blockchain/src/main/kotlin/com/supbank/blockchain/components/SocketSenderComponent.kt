@@ -1,9 +1,7 @@
 package com.supbank.blockchain.components
 
 import com.google.gson.Gson
-import com.supbank.blockchain.models.Node
 import com.supbank.blockchain.pojo.NodePojo
-import com.supbank.blockchain.repos.NodeRepository
 import com.supbank.blockchain.utils.p2p.JoinPayload
 import com.supbank.blockchain.utils.p2p.NodesPayload
 import com.supbank.blockchain.utils.p2p.P2pPayload
@@ -41,6 +39,11 @@ class SocketSenderComponent(private val log: Logger) {
 
     @Value("\${p2p.port}")
     var accessiblePort: Int = 0
+
+    /**
+     * Function use to list all the node of this current server
+     */
+    fun nodes() = clients.keys.toList()
 
     /**
      * Init the base client connexion to a known host
@@ -151,9 +154,86 @@ class SocketSenderComponent(private val log: Logger) {
                     }.subscribeOn(Schedulers.io()).subscribe()
         }
     }
-
-    /**
-     * Function use to list all the node of this current server
-     */
-    fun nodes() = clients.keys.toList()
 }
+
+/**
+ * Payload description :
+ *  -> metadata = data type transfered (only string for title, or for wallet / transaction / block custom metadata object created with gson)
+ *  -> data = data transfered by payload ( created with gson)
+ *
+ * Exchange :
+ *  -> join :
+ *      -> req payload
+ *          -> metadata = "join"
+ *          -> data = object composed of : local node + ? (other data needed to join the blockchain network)
+ *      -> resp payloads (flowable)
+ *          -> current nodes payload
+ *              -> metadata = "nodes"
+ *              -> data = ArrayList of node present on blockchain sorted by current availability
+ *          -> blockchain payload
+ *              -> metadata = "blockchain_status"
+ *              -> data = Last block in the blockchain (the client will handle the blockchain sync when he will get a connection to all the node)
+ *          -> transaction payload
+ *              -> metadata = "transaction_status"
+ *              -> data = Last transaction in the pool (the client will handle the transaction sync after the blockchain sync)
+ *          -> wallet payload
+ *              -> metadata = "wallet_status"
+ *              -> data = Wallet count the client will get all the wallet before the blockchain sync)
+ *
+ *  -> new_node (broadcasted to all node when received a join request or when a node finished to connect to all the other node ??)
+ *      -> req payload
+ *          -> metadata = "node_joined"
+ *          -> data = the node that joined the network
+ *      -> resp (completable)
+ *
+ *  -> wallet sync
+ *      -> req payload
+ *          -> metadata = "wallet_sync"
+ *          -> data = last wallet in db hash
+ *      -> resp payload (single)
+ *          -> metadata = "wallets"
+ *          -> data = ArrayList of wallet in the network
+ *
+ *  -> blockchain sync
+ *      -> req payload
+ *          -> metadata = "blockchain_sync"
+ *          -> data = last block hash
+ *      -> resp payloads (flowable, same payload repeated until the last block wa send)
+ *          -> metadata = "blocks"
+ *          -> data = List of five block starting to the oldest to the newer
+ *
+ *  -> transaction sync = same as blockchain sync but for transaction
+ *
+ * Merge wallet, blockchain & transaction sync in the same request ?
+ * Add a service to check on other node only the status of all of this ?
+ * Checking each block when sync, if bad then resync on another node ? suffisant to prevent bad block intrusion ?
+ *
+ *  -> add_wallet (broadcast)
+ *      -> req payload
+ *          -> metadata = "add_wallet"
+ *          -> data = object describing the newly created wallet
+ *      -> resp (completable)
+ *
+ *  -> publish_transaction (broadcast)
+ *      -> req payload
+ *          -> metadata = "publish_transaction"
+ *          -> data = object describing the new transaction
+ *      -> resp (completable)
+ *
+ *  -> start_mining_block (broadcast)
+ *      -> req payload
+ *          -> metadata = "start_mining_block"
+ *          -> data = Array of transaction hash that will be mined (with start timestamp)
+ *      -> resp (completable)
+ *
+ *  -> block_mined (broadcast)
+ *      -> req payload
+ *          -> metadata = "block_mined"
+ *          -> data = the newly created block and the transaction id to remove from the mining pool
+ *      -> resp (completable)
+ *
+ *  Crypting the blockchain related stuff with priv key wallet and asserting veracity with him pub key ?
+ *      -> publish_transaction & block_mined request metadata to crypt ?
+ *      -> custom error if bad signature ?
+
+        */

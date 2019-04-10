@@ -2,7 +2,6 @@ package com.supbank.blockchain.components
 
 import com.google.gson.Gson
 import com.supbank.blockchain.pojo.NodePojo
-import com.supbank.blockchain.repos.NodeRepository
 import com.supbank.blockchain.utils.P2pException
 import com.supbank.blockchain.utils.p2p.NewNodePayload
 import com.supbank.blockchain.utils.p2p.NodesPayload
