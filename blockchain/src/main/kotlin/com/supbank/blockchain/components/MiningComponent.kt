@@ -79,7 +79,7 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
             transactionRepository.save(transaction)
         }
 
-        // TODO : Reward miner and send block to other node
+        // TODO : Reward miner and send block to other node via p2p
 
         // Call to a new block mining
         mine()

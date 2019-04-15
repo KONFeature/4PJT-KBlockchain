@@ -6,20 +6,20 @@ import javax.persistence.*
 
 @Entity
 data class Block(
-        @Column
+        @Column(nullable = false)
         val prevHash: String,
 
-        @Column
+        @Column(nullable = false)
         var hash: String = "",
 
         @OneToMany
         @JoinTable(uniqueConstraints = [UniqueConstraint(columnNames = ["transactions_id"])])
         val transactions: Collection<Transaction>,
 
-        @Column
+        @Column(nullable = false)
         val nonce: Long = 0,
 
-        @Column
+        @Column(nullable = false)
         val timestamp: Long = Instant.now().toEpochMilli())
 {
 
