@@ -16,6 +16,8 @@ class SocketUtils {
 class P2pException(val msg: String) : Exception(msg) {
     companion object {
         fun unknownOperationException(payload: Payload) = P2pException("Received an unknown operation : \"" + payload.metadataUtf8 + "\"")
+
+        fun walletKnownException(payload: Payload) = P2pException("Received a known wallet to add : \"" + payload.metadataUtf8 + "\"")
     }
 
 

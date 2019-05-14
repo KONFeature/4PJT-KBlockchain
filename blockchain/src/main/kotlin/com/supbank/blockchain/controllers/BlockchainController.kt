@@ -64,4 +64,7 @@ class BlockchainController(private val miningComponent: MiningComponent,
         transactionRepository.saveAll(transactions)
         return "test"
     }
+
+    // TODO : Blockchain sync
+    // TODO : Blockchain validation
 }

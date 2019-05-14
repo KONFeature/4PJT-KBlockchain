@@ -4,6 +4,7 @@ import com.supbank.blockchain.models.Block
 import com.supbank.blockchain.models.Transaction
 import com.supbank.blockchain.repos.BlockchainRepository
 import com.supbank.blockchain.repos.TransactionRepository
+import com.supbank.blockchain.utils.p2p.BlockMinedPayload
 import org.slf4j.Logger
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
@@ -11,6 +12,7 @@ import java.util.concurrent.TimeUnit
 @Component
 class MiningComponent(private val transactionRepository: TransactionRepository,
                       private val blockchainRepository: BlockchainRepository,
+                      private var socketSender: SocketSenderComponent,
                       private val log: Logger) {
 
     companion object {
@@ -79,7 +81,10 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
             transactionRepository.save(transaction)
         }
 
-        // TODO : Reward miner and send block to other node via p2p
+        // Send the mined block to other node
+        socketSender.broadcastFf(BlockMinedPayload(block).get())
+
+        // TODO : Reward miner
 
         // Call to a new block mining
         mine()

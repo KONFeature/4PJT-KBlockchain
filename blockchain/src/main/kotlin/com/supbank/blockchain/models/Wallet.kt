@@ -22,18 +22,19 @@ data class Wallet(
         val pubKey: PublicKey,
 
         @Transient
-        val privKey: PrivateKey,
-
-        // Amount of coin in the wallet confirmed (deduced by the block present in the chain)
-        @Transient
-        val amount: Long,
-
-        // Amount of coin in the wallet for transaction not mined
-        @Transient
-        val futurAmount: Long
+        var privKey: PrivateKey
 )
 {
+    @Expose
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     var id: Long = 0
+
+    // Amount of coin in the wallet confirmed (deduced by the block present in the chain)
+    @Transient
+    val amount: Long = 0L
+
+    // Amount of coin in the wallet for transaction not mined
+    @Transient
+    val futurAmount: Long = 0L
 }
