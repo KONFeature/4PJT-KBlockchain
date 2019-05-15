@@ -35,9 +35,14 @@ class WalletController(private val sender: SocketSenderComponent,
     }
 
     @GetMapping("/publish")
-    fun publishTransaction(msg: String, amount: Long, receiverId: Long) : String {
-        // Check if wallet is logged in
-        // If yes create a transaction
-        return "To implement"
+    fun publishTransaction(@RequestParam("message") msg: String,
+                           @RequestParam("amount") amount: Int,
+                           @RequestParam("receiver") receiverId: Long) : String {
+        val transactionStatus = walletComponent.newTransaction(msg, amount, receiverId)
+        return if(transactionStatus)
+            "Transaction successfully created and submitted on the network"
+        else
+            "Error during the creation of the transaction, please check the blockchain log"
     }
+
 }

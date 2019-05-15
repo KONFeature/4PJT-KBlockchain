@@ -18,6 +18,7 @@ data class Transaction(
         @Column(nullable = false)
         val amount: Int,
 
+        @Lob
         @Column
         val message: String
 )

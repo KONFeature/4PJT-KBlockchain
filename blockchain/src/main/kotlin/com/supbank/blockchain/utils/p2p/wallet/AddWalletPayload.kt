@@ -1,9 +1,8 @@
-package com.supbank.blockchain.utils.p2p
+package com.supbank.blockchain.utils.p2p.wallet
 
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.supbank.blockchain.models.Wallet
 import com.supbank.blockchain.utils.GsonUtils
+import com.supbank.blockchain.utils.p2p.P2pPayload
 
 class AddWalletPayload(private val wallet: Wallet) : P2pPayload(title) {
     companion object {

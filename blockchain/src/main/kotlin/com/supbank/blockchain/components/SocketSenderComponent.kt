@@ -2,8 +2,8 @@ package com.supbank.blockchain.components
 
 import com.google.gson.Gson
 import com.supbank.blockchain.pojo.NodePojo
-import com.supbank.blockchain.utils.p2p.JoinPayload
-import com.supbank.blockchain.utils.p2p.NodesPayload
+import com.supbank.blockchain.utils.p2p.sync.JoinPayload
+import com.supbank.blockchain.utils.p2p.sync.NodesPayload
 import com.supbank.blockchain.utils.p2p.P2pPayload
 import io.reactivex.Completable
 import io.reactivex.schedulers.Schedulers

@@ -4,11 +4,13 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.supbank.blockchain.models.Transaction
 import com.supbank.blockchain.models.Wallet
+import com.supbank.blockchain.repos.TransactionRepository
 import com.supbank.blockchain.repos.WalletRepository
 import com.supbank.blockchain.utils.CryptoUtil
 import com.supbank.blockchain.utils.GsonUtils
 import com.supbank.blockchain.utils.P2pException
-import com.supbank.blockchain.utils.p2p.AddWalletPayload
+import com.supbank.blockchain.utils.p2p.wallet.AddWalletPayload
+import com.supbank.blockchain.utils.p2p.wallet.PublishTransactionPayload
 import io.reactivex.Completable
 import io.rsocket.kotlin.Payload
 import org.slf4j.Logger
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component
 @Component
 class WalletComponent (private val socketSender: SocketSenderComponent,
                        private val walletRepository: WalletRepository,
+                       private val transactionRepository: TransactionRepository,
                        private val log: Logger) {
 
     @Value("\${wallet.key.path}")
@@ -82,9 +85,38 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
     /**
      * Function used to create a new transaction
      */
-    public fun newTransaction() : Boolean {
-        // TODO : Just DO IT !
-        return false
+    public fun newTransaction(msg: String, amount: Int, receiverId : Long) : Boolean {
+        // Check sending wallet
+        if(wallet == null) {
+            log.warn("No wallet loaded, unable to create a transaction aborting")
+            return false
+        }
+
+        // Check receiver wallet
+        val receiverOpt = walletRepository.findById(receiverId)
+        if(!receiverOpt.isPresent) {
+            log.warn("No receiver founded with the id {}, aborting the creation of thetransaction", receiverId)
+            return false
+        }
+        val receiver = receiverOpt.get()
+
+        // Check balance
+        if(wallet!!.amount < amount) {
+            log.warn("Not enough coins on ur wallet to create the transaction")
+            return false
+        }
+
+        // Create the transaction
+        val transaction = Transaction.create(receiver, wallet!!, msg, amount)
+
+        // Save the transaction in db
+        transactionRepository.save(transaction)
+
+        // Send the transaction to other node
+        socketSender.broadcastFf(PublishTransactionPayload(transaction).get())
+
+        log.info("Newly created transaction : $transaction")
+        return true
     }
 
     /**
@@ -101,7 +133,7 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
             }
         } catch(e: JsonSyntaxException) {
             log.error("Unable to parse to payload to a wallet object {}, {}", payload.dataUtf8, e.message)
-            Completable.error(P2pException.walletKnownException(payload))
+            Completable.error(P2pException.unableToPaseException(payload, e.message))
         }
     }
 
@@ -109,13 +141,18 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
      * Function used to add a transaction received from the p2p network
      */
     public fun receivedTransaction(payload: Payload) : Completable {
-        try {
+        return try {
             val transaction = Gson().fromJson(payload.dataUtf8, Transaction::class.java)
-            // TODO : Implement that
+            if(!transactionRepository.existsById(transaction.id)) {
+                transactionRepository.save(transaction)
+                Completable.complete()
+            } else {
+                Completable.error(P2pException.transactionKnownException(payload))
+            }
         } catch(e: JsonSyntaxException) {
             log.error("Unable to parse to payload to a wallet object {}, {}", payload.dataUtf8, e.message)
+            Completable.error(P2pException.unableToPaseException(payload, e.message))
         }
-        return Completable.error(P2pException.unknownOperationException(payload))
     }
 
 }

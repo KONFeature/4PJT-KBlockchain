@@ -2,15 +2,12 @@ package com.supbank.blockchain.components
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
-import com.supbank.blockchain.models.Block
-import com.supbank.blockchain.models.Wallet
 import com.supbank.blockchain.pojo.NodePojo
-import com.supbank.blockchain.repos.BlockchainRepository
-import com.supbank.blockchain.repos.WalletRepository
 import com.supbank.blockchain.utils.P2pException
-import com.supbank.blockchain.utils.p2p.NewNodePayload
-import com.supbank.blockchain.utils.p2p.NodesPayload
+import com.supbank.blockchain.utils.p2p.sync.NewNodePayload
+import com.supbank.blockchain.utils.p2p.sync.NodesPayload
 import com.supbank.blockchain.utils.p2p.P2pPayload
+import com.supbank.blockchain.utils.p2p.sync.StatusPayload
 import io.reactivex.*
 import io.reactivex.schedulers.Schedulers
 import io.rsocket.kotlin.*
@@ -20,7 +17,6 @@ import io.rsocket.kotlin.util.AbstractRSocket
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.io.IOException
 import javax.annotation.PostConstruct
 
 /**
@@ -30,6 +26,7 @@ import javax.annotation.PostConstruct
 class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
                               private val walletComponent: WalletComponent,
                               private val miningComponent: MiningComponent,
+                              private val syncComponent: SyncComponent,
                               private val log: Logger) {
 
     // Server that receive the request
@@ -77,6 +74,8 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
                     }
                     Completable.complete()
                 }
+                P2pPayload.isStatus(payload) -> syncComponent.receivedStatus(payload)
+                P2pPayload.isAskSync(payload) -> syncComponent.receivedSyncRequest(payload)
                 P2pPayload.isAddWallet(payload) -> walletComponent.receivedPayload(payload)
                 P2pPayload.isPublishTransaction(payload) -> walletComponent.receivedTransaction(payload)
                 P2pPayload.isBlockMined(payload) -> miningComponent.receivedBlockMined(payload)
@@ -131,7 +130,9 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
             if(toSend.isNotEmpty())
                 emitter.onNext(NodesPayload(toSend).get())
 
-            // TODO : Return blockchain, transactions and wallets status
+            // Send the blockchain status
+            emitter.onNext(StatusPayload(syncComponent.getStatus()).get())
+
             emitter.onComplete()
         }, BackpressureStrategy.BUFFER)
     }
