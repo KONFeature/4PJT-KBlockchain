@@ -22,7 +22,7 @@ object GsonUtils {
      */
     class PublicKeySerializer : JsonSerializer<PublicKey>, JsonDeserializer<PublicKey> {
         companion object {
-            const val ENCODED_KEY_PROPERTY = "encoded-key"
+            const val ENCODED_KEY_PROPERTY = "encodedKey"
         }
 
         override fun serialize(src: PublicKey?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
