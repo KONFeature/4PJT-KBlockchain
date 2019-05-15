@@ -1,10 +1,15 @@
 package com.supbank.blockchain.components
 
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.supbank.blockchain.models.Block
 import com.supbank.blockchain.models.Transaction
 import com.supbank.blockchain.repos.BlockchainRepository
 import com.supbank.blockchain.repos.TransactionRepository
+import com.supbank.blockchain.utils.P2pException
 import com.supbank.blockchain.utils.p2p.BlockMinedPayload
+import io.reactivex.Completable
+import io.rsocket.kotlin.Payload
 import org.slf4j.Logger
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
@@ -88,5 +93,18 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
 
         // Call to a new block mining
         mine()
+    }
+
+    /**
+     * Received a mined block from p2p network
+     */
+    fun receivedBlockMined(payload: Payload) : Completable {
+        try {
+            val block: Block? = Gson().fromJson(payload.dataUtf8, Block::class.java)
+            // TODO : Check last hash corresponding to last block in blockchain, else abort add and resync
+        } catch(e: JsonSyntaxException) {
+            log.error("Unable to parse to payload to a block object {}, {}", payload.dataUtf8, e.message)
+        }
+        return Completable.error(P2pException.unknownOperationException(payload))
     }
 }

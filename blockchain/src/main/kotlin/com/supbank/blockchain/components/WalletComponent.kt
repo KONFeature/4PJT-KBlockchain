@@ -1,12 +1,21 @@
 package com.supbank.blockchain.components
 
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
+import com.supbank.blockchain.models.Transaction
 import com.supbank.blockchain.models.Wallet
 import com.supbank.blockchain.repos.WalletRepository
 import com.supbank.blockchain.utils.CryptoUtil
+import com.supbank.blockchain.utils.GsonUtils
+import com.supbank.blockchain.utils.P2pException
 import com.supbank.blockchain.utils.p2p.AddWalletPayload
+import io.reactivex.Completable
+import io.rsocket.kotlin.Payload
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.stereotype.Component
 
+@Component
 class WalletComponent (private val socketSender: SocketSenderComponent,
                        private val walletRepository: WalletRepository,
                        private val log: Logger) {
@@ -33,7 +42,10 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
             wallet = Wallet(name, keyPair.public, keyPair.private)
 
             // Send the wallet to the other node
-            wallet?.let { socketSender.broadcastFf(AddWalletPayload(it).get()) }
+            wallet?.let {
+                walletRepository.save(it)
+                socketSender.broadcastFf(AddWalletPayload(it).get())
+            }
         }?:run {
             log.error("Unable to generate keypair for the new wallet, aborting")
         }
@@ -76,6 +88,37 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
     public fun newTransaction() : Boolean {
         // TODO : Just DO IT !
         return false
+    }
+
+    /**
+     * Function used to add a wallet when received it from p2p network
+     */
+    public fun receivedPayload(payload: Payload) : Completable {
+        return try {
+            val wallet = GsonUtils.getWalletCustom().fromJson(payload.dataUtf8, Wallet::class.java)
+            if(!walletRepository.existsById(wallet.id)) {
+                walletRepository.save(wallet)
+                Completable.complete()
+            } else {
+                Completable.error(P2pException.walletKnownException(payload))
+            }
+        } catch(e: JsonSyntaxException) {
+            log.error("Unable to parse to payload to a wallet object {}, {}", payload.dataUtf8, e.message)
+            Completable.error(P2pException.walletKnownException(payload))
+        }
+    }
+
+    /**
+     * Function used to add a transaction received from the p2p network
+     */
+    public fun receivedTransaction(payload: Payload) : Completable {
+        try {
+            val transaction = Gson().fromJson(payload.dataUtf8, Transaction::class.java)
+            // TODO : Implement that
+        } catch(e: JsonSyntaxException) {
+            log.error("Unable to parse to payload to a wallet object {}, {}", payload.dataUtf8, e.message)
+        }
+        return Completable.error(P2pException.unknownOperationException(payload))
     }
 
 }

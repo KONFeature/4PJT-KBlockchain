@@ -1,11 +1,9 @@
 package com.supbank.blockchain.controllers
 
 import com.supbank.blockchain.components.SocketSenderComponent
+import com.supbank.blockchain.components.WalletComponent
 import org.slf4j.Logger
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 /**
  * Handle creation / transaction
@@ -13,19 +11,21 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/wallet")
 class WalletController(private val sender: SocketSenderComponent,
+                       private val walletComponent: WalletComponent,
                        private val log: Logger) {
 
     @PostMapping("/create")
-    fun createWallet() : String {
-        // Check if we can load a wallet
-        // Else create a new one
-        return "To implement"
+    fun createWallet(@RequestParam("name") name: String) : String {
+        // Create new wallet
+        val wallet = walletComponent.create(name)
+        return wallet?.let { "Wallet created : $it" }?:kotlin.run { "Error during wallet creation" }
     }
 
     @PostMapping("/load")
     fun loadWallet() : String {
         // Try to load a wallet
-        return "To implement"
+        val wallet = walletComponent.load()
+        return wallet?.let { "Wallet loaded : $it" }?:kotlin.run { "Error during wallet loading" }
     }
 
     @PostMapping("/publish")

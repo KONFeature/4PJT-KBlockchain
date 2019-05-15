@@ -28,8 +28,8 @@ import javax.annotation.PostConstruct
  */
 @Component
 class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
-                              private val walletRepository: WalletRepository,
-                              private val blockchainRepository: BlockchainRepository,
+                              private val walletComponent: WalletComponent,
+                              private val miningComponent: MiningComponent,
                               private val log: Logger) {
 
     // Server that receive the request
@@ -77,31 +77,9 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
                     }
                     Completable.complete()
                 }
-                P2pPayload.isAddWallet(payload) -> {
-                    // Received a new wallet
-                    try {
-                        val wallet = Gson().fromJson(payload.dataUtf8, Wallet::class.java)
-                        if(!walletRepository.existsById(wallet.id)) {
-                            walletRepository.save(wallet)
-                            Completable.complete()
-                        } else {
-                            Completable.error(P2pException.walletKnownException(payload))
-                        }
-                    } catch(e: JsonSyntaxException) {
-                        log.error("Unable to parse to payload to a wallet object {}, {}", payload.dataUtf8, e.message)
-                        Completable.error(P2pException.walletKnownException(payload))
-                    }
-                }
-                P2pPayload.isPublishTransaction(payload) -> {
-                    try {
-                        val block: Block? = Gson().fromJson(payload.dataUtf8, Block::class.java)
-                        // TODO : Check last hash corresponding to last block in blockchain, else abort add and resync
-                    } catch(e: JsonSyntaxException) {
-                        log.error("Unable to parse to payload to a block object {}, {}", payload.dataUtf8, e.message)
-                    }
-                    Completable.error(P2pException.unknownOperationException(payload))
-                }
-                P2pPayload.isBlockMined(payload) -> Completable.error(P2pException.unknownOperationException(payload))
+                P2pPayload.isAddWallet(payload) -> walletComponent.receivedPayload(payload)
+                P2pPayload.isPublishTransaction(payload) -> walletComponent.receivedTransaction(payload)
+                P2pPayload.isBlockMined(payload) -> miningComponent.receivedBlockMined(payload)
                 else -> Completable.error(P2pException.unknownOperationException(payload))
             }
         }
