@@ -20,11 +20,8 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
                        private val walletRepository: WalletRepository,
                        private val log: Logger) {
 
-    @Value("\${wallet.public.key.path}")
-    lateinit var publicKeyPath: String
-
-    @Value("\${wallet.private.key.path}")
-    lateinit var privateKeyPath: String
+    @Value("\${wallet.key.path}")
+    lateinit var keyPath: String
 
     var wallet: Wallet? = null
 
@@ -36,9 +33,9 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
         wallet = null
 
         // Generate a keypair
-        CryptoUtil.createKeyPair(publicKeyPath, privateKeyPath)?.let {keyPair ->
+        CryptoUtil.createKeyPair(keyPath)?.let {keyPair ->
             // Create the wallet from the keypair
-            log.info("Successfully created a keypair at the location {} and {}", publicKeyPath, privateKeyPath)
+            log.info("Successfully created a keypair at the location {}", keyPath)
             wallet = Wallet(name, keyPair.public, keyPair.private)
 
             // Send the wallet to the other node
@@ -62,11 +59,11 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
         // store it static
 
         // Try to find local keypair
-        CryptoUtil.loadKeyPair(publicKeyPath, privateKeyPath)?.let { keyPair ->
-            log.info("Successfully loaded the keypair from {} and {}", publicKeyPath, privateKeyPath)
+        CryptoUtil.loadKeyPair(keyPath)?.let { keyPair ->
+            log.info("Successfully loaded the keypair from {}", keyPath)
 
             // Find the wallet corresponding to the public key in db
-            wallet = walletRepository.getByPubKey(keyPair.public)
+            wallet = walletRepository.getByPubKeyEquals(keyPair.public)
             wallet?.let {
                 // Load private key
                 it.privKey = keyPair.private

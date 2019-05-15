@@ -6,6 +6,5 @@ import java.security.PublicKey
 
 interface WalletRepository: CrudRepository<Wallet, Long> {
 
-    fun getByPubKey(pubKey: PublicKey) : Wallet?
-
+    fun getByPubKeyEquals(pubKey: PublicKey) : Wallet?
 }

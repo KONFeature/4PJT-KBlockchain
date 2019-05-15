@@ -1,9 +1,7 @@
 package com.supbank.blockchain.utils
 
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.security.*
@@ -18,6 +16,8 @@ object CryptoUtil {
     const val CRYPTO_ALGORITHM = "RSA"
     const val CRYPTO_BITS = 2048
     const val CRYPTO_TRANSFORM = "RSA/ECB/OAEPWithSHA1AndMGF1Padding"
+    const val PUB_KEY_NAME = "pub.key"
+    const val PRIV_KEY_NAME = "priv.key"
 
     // Factory and cipher
     private val factory = KeyFactory.getInstance(CRYPTO_ALGORITHM)
@@ -30,8 +30,8 @@ object CryptoUtil {
     /**
      * Function used to create a key pair
      */
-    fun createKeyPair(pubPath: String, privPath: String) : KeyPair? {
-        log.debug("Generating keypair to path {} {}", pubPath, privPath)
+    fun createKeyPair(path: String) : KeyPair? {
+        log.debug("Generating keypair to path {}", path)
 
         // Generate the keypair
         generator.initialize(CRYPTO_BITS)
@@ -39,8 +39,8 @@ object CryptoUtil {
 
         // Store the keypair to the specified path
         try {
-            val pubFile = File(pubPath)
-            val privFile = File(privPath)
+            val pubFile = File(path, PUB_KEY_NAME)
+            val privFile = File(path, PRIV_KEY_NAME)
 
             // Check the folder tree
             if(!pubFile.parentFile.exists())
@@ -66,13 +66,13 @@ object CryptoUtil {
     /**
      * Function used to lod local keypair
      */
-    fun loadKeyPair(pubPath: String, privPath: String) : KeyPair? {
-        log.debug("Loading keypair from path {} {}", pubPath, privPath)
+    fun loadKeyPair(path: String) : KeyPair? {
+        log.debug("Loading keypair from path {} ", path)
 
         // Find the file and load them
         try {
-            val pubFile = File(pubPath)
-            val privFile = File(privPath)
+            val pubFile = File(path, PUB_KEY_NAME)
+            val privFile = File(path, PRIV_KEY_NAME)
 
             log.debug("Public key file path {}, private key file path {}", pubFile.absolutePath, privFile.absolutePath)
 

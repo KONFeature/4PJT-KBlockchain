@@ -22,7 +22,7 @@ data class Wallet(
 
         @Expose
         @Lob
-        @Column(unique = true, nullable = false)
+        @Column(nullable = false)
         @Convert(converter = PublicKeyConverter::class)
         val pubKey: PublicKey,
 
@@ -44,7 +44,7 @@ data class Wallet(
     val futurAmount: Long = 0L
 
     override fun toString(): String {
-        return GsonUtils.getWalletCustom().toJson(this)
+        return "name: $name, id: $id, amount: $amount"
     }
 
     /**
@@ -58,6 +58,5 @@ data class Wallet(
         override fun convertToDatabaseColumn(attribute: PublicKey?): String {
             return Base64.getEncoder().encodeToString(attribute?.encoded)
         }
-
     }
 }

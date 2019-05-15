@@ -15,21 +15,27 @@ class WalletController(private val sender: SocketSenderComponent,
                        private val log: Logger) {
 
     @GetMapping("/create")
-    fun createWallet(@RequestParam("name") name: String) : String {
+    fun create(@RequestParam("name") name: String) : String {
         // Create new wallet
         val wallet = walletComponent.create(name)
         return wallet?.let { "Wallet created : $it" }?:kotlin.run { "Error during wallet creation" }
     }
 
     @GetMapping("/load")
-    fun loadWallet() : String {
+    fun load() : String {
         // Try to load a wallet
         val wallet = walletComponent.load()
         return wallet?.let { "Wallet loaded : $it" }?:kotlin.run { "Error during wallet loading" }
     }
 
+    @GetMapping("/status")
+    fun status() : String {
+        val wallet = walletComponent.wallet
+        return wallet?.let { "Current wallet : $it" }?:kotlin.run { "No wallet loaded" }
+    }
+
     @GetMapping("/publish")
-    fun publishTransaction() : String {
+    fun publishTransaction(msg: String, amount: Long, receiverId: Long) : String {
         // Check if wallet is logged in
         // If yes create a transaction
         return "To implement"
