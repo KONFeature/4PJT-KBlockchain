@@ -7,4 +7,6 @@ interface TransactionRepository: CrudRepository<Transaction, Long> {
 
     fun findAllByMinedFalse() : List<Transaction>
 
+    fun getTopByOrderByIdDesc() : Transaction?
+
 }

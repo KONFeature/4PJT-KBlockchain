@@ -16,7 +16,6 @@ abstract class P2pPayload(var title: String) {
         fun isPublishTransaction(payload: Payload) = payload.metadataUtf8 == PublishTransactionPayload.title
         fun isBlockMined(payload: Payload) = payload.metadataUtf8 == BlockMinedPayload.title
         fun isStatus(payload: Payload) = payload.metadataUtf8 == StatusPayload.title
-        fun isAskSync(payload: Payload) = payload.metadataUtf8 == AskSyncPayload.title
     }
 
     abstract fun getData(): String

@@ -74,8 +74,6 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
                     }
                     Completable.complete()
                 }
-                P2pPayload.isStatus(payload) -> syncComponent.receivedStatus(payload)
-                P2pPayload.isAskSync(payload) -> syncComponent.receivedSyncRequest(payload)
                 P2pPayload.isAddWallet(payload) -> walletComponent.receivedPayload(payload)
                 P2pPayload.isPublishTransaction(payload) -> walletComponent.receivedTransaction(payload)
                 P2pPayload.isBlockMined(payload) -> miningComponent.receivedBlockMined(payload)
@@ -91,12 +89,13 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
         override fun requestStream(payload: Payload): Flowable<Payload> {
             log.debug("Server received rs get {}->{}", payload.dataUtf8, payload.metadataUtf8)
 
-            return if(P2pPayload.isJoin(payload)) {
-                // Received a join request
-                joinResponse(payload)
-            } else {
-                // Unknown operation request
-                Flowable.error<Payload>(P2pException.unknownOperationException(payload))
+            return when {
+                P2pPayload.isJoin(payload) -> // Received a join request
+                    joinResponse(payload)
+                P2pPayload.isStatus(payload) -> // Received a status of an other node in the network
+                    syncComponent.receivedStatus(payload)
+                else -> // Unknown operation request
+                    Flowable.error<Payload>(P2pException.unknownOperationException(payload))
             }
         }
     })
@@ -129,9 +128,6 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
             // If we have nodes not send we s end them now
             if(toSend.isNotEmpty())
                 emitter.onNext(NodesPayload(toSend).get())
-
-            // Send the blockchain status
-            emitter.onNext(StatusPayload(syncComponent.getStatus()).get())
 
             emitter.onComplete()
         }, BackpressureStrategy.BUFFER)

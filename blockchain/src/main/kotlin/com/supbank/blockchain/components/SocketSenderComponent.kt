@@ -5,6 +5,7 @@ import com.supbank.blockchain.pojo.NodePojo
 import com.supbank.blockchain.utils.p2p.sync.JoinPayload
 import com.supbank.blockchain.utils.p2p.sync.NodesPayload
 import com.supbank.blockchain.utils.p2p.P2pPayload
+import com.supbank.blockchain.utils.p2p.sync.StatusPayload
 import io.reactivex.Completable
 import io.reactivex.schedulers.Schedulers
 import io.rsocket.kotlin.Payload
@@ -23,7 +24,8 @@ import javax.annotation.PostConstruct
  * List of socket connected to the node
  */
 @Component
-class SocketSenderComponent(private val log: Logger) {
+class SocketSenderComponent(private val log: Logger,
+                            private val syncComponent: SyncComponent) {
 
     // Map of all the socket clients
     private var clients: HashMap<NodePojo, RSocket> = HashMap()
@@ -39,6 +41,9 @@ class SocketSenderComponent(private val log: Logger) {
 
     @Value("\${p2p.port}")
     var accessiblePort: Int = 0
+
+    // Var used to know if we are currently syncing the blockchain or not
+    private var syncInProgress = false
 
     /**
      * Function use to list all the node of this current server
@@ -85,6 +90,7 @@ class SocketSenderComponent(private val log: Logger) {
                     }
                 }.doOnComplete {
                     log.info("End of the join request")
+                    if(!syncInProgress) sync(socket)
                 }.doOnError { error ->
                     log.error("Error when joining the known node on the network {}", error)
                 }.subscribeOn(Schedulers.io()).subscribe()
@@ -99,7 +105,7 @@ class SocketSenderComponent(private val log: Logger) {
             return
         }
 
-        if(Inet4Address.getLocalHost().hostAddress.equals(node.host, true) ||
+        if (Inet4Address.getLocalHost().hostAddress.equals(node.host, true) ||
                 Inet6Address.getLocalHost().hostAddress.equals(node.host, true) ||
                 Inet4Address.getLoopbackAddress().hostAddress.equals(node.host, true) ||
                 Inet6Address.getLoopbackAddress().hostAddress.equals(node.host, true)) {
@@ -121,6 +127,38 @@ class SocketSenderComponent(private val log: Logger) {
                 }.doOnError { error ->
                     log.warn("Error when initialising the client on node {} : {}", node, error)
                 }.subscribeOn(Schedulers.io()).subscribe()
+    }
+
+    /**
+     * Function used to ask sync to other node
+     */
+    fun sync(socket: RSocket) {
+        // Get the max available client
+        var socketTmp: RSocket? = null
+        for (client in clients) {
+            if (socketTmp == null || client.value.availability() > socketTmp.availability()) {
+                socketTmp = client.value
+            }
+        }
+
+        // Fetch ur current status
+        val status = syncComponent.getStatus()
+
+        // Send the sync request to the client
+        log.info("Send the status of the blockchain to the known nodes, see if we need a sync or not")
+        socket.let {
+            it.requestStream(StatusPayload(status).get())
+                    .doOnNext {payload ->
+                        syncComponent.receivedSyncResponse(payload)
+                    }.doOnComplete {
+                        log.info("End of the synchronization with other node")
+                    }.doOnError {
+                        log.error("Error occured during synchronization {}", it.message)
+                    }.subscribeOn(Schedulers.io())
+                    .subscribe()
+        } ?: run {
+            log.error("Error when launching the sync request, unable to find a socket available")
+        }
     }
 
     /**
@@ -149,7 +187,7 @@ class SocketSenderComponent(private val log: Logger) {
             entry.value.fireAndForget(payload)
                     .doOnComplete {
                         log.debug("Successfully send the \"{}\" broadcast to the node {}", payload.metadataUtf8, entry.key)
-                    }.doOnError {error ->
+                    }.doOnError { error ->
                         log.warn("Error when sending the \"{}\" broadcast to the node {} : {}", payload.metadataUtf8, entry.key, error)
                     }.subscribeOn(Schedulers.io()).subscribe()
         }
@@ -236,4 +274,4 @@ class SocketSenderComponent(private val log: Logger) {
  *      -> publish_transaction & block_mined request metadata to crypt ?
  *      -> custom error if bad signature ?
 
-        */
+ */

@@ -4,16 +4,9 @@ import io.rsocket.kotlin.DefaultPayload
 import io.rsocket.kotlin.Payload
 
 /**
- * Class helping us to create request get
- * TODO : Realy usefull ?
- */
-class SocketUtils {
-}
-
-/**
  * Class defining all the custom exception linked to p2p error
  */
-class P2pException(val msg: String) : Exception(msg) {
+class P2pException(private val msg: String) : Exception(msg) {
     companion object {
         fun unknownOperationException(payload: Payload) = P2pException("Received an unknown operation : \"${payload.metadataUtf8}\"")
         fun unableToPaseException(payload: Payload, msg: String?) = P2pException("Unable to parse the received data : \"${payload.metadataUtf8}\" : $msg")

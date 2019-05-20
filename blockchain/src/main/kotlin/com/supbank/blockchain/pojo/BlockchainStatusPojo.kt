@@ -1,8 +1,8 @@
 package com.supbank.blockchain.pojo
 
 data class BlockchainStatusPojo(
-        val walletCount: Long,
-        val transactionCount: Long,
-        val blockCount: Long,
+        val walletLastId: Long,
+        val transactionLastId: Long,
+        val blockLastId: Long,
         val lastBlockHash: String?
 )

@@ -124,6 +124,7 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
      */
     public fun receivedPayload(payload: Payload) : Completable {
         return try {
+            log.info("Adding a new wallet")
             val wallet = GsonUtils.getWalletCustom().fromJson(payload.dataUtf8, Wallet::class.java)
             if(!walletRepository.existsById(wallet.id)) {
                 walletRepository.save(wallet)

@@ -5,6 +5,6 @@ import org.springframework.data.repository.CrudRepository
 
 interface BlockchainRepository: CrudRepository<Block, Long> {
 
-    fun findFirstOrderByTimestamp() : Block?
+    fun getTopByOrderByIdDesc() : Block?
 
 }
