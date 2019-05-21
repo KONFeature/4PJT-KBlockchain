@@ -1,5 +1,6 @@
 package com.supbank.blockchain.controllers
 
+import com.supbank.blockchain.components.MiningComponent
 import com.supbank.blockchain.components.SocketSenderComponent
 import com.supbank.blockchain.components.WalletComponent
 import org.slf4j.Logger
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/wallet")
 class WalletController(private val sender: SocketSenderComponent,
                        private val walletComponent: WalletComponent,
+                       private val miningComponent: MiningComponent,
                        private val log: Logger) {
 
     @GetMapping("/create")
@@ -43,6 +45,15 @@ class WalletController(private val sender: SocketSenderComponent,
             "Transaction successfully created and submitted on the network"
         else
             "Error during the creation of the transaction, please check the blockchain log"
+    }
+
+    @GetMapping("/miner")
+    fun miner(@RequestParam("status") status: Boolean) : Boolean {
+        return if(status) {
+            miningComponent.startMining()
+        } else {
+            miningComponent.stopMining()
+        }
     }
 
 }

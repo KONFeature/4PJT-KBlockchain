@@ -24,8 +24,9 @@ dependencies {
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
 	implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
 
-	// Apache
-	compile 'commons-cli:commons-cli:1.4'
+	// Retrofit
+	implementation 'com.squareup.retrofit2:retrofit:2.5.0'
+	implementation 'com.squareup.retrofit2:converter-scalars:2.5.0'
 }
 
 compileKotlin {

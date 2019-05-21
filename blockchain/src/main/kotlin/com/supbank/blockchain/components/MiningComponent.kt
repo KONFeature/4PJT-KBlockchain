@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit
 @Component
 class MiningComponent(private val transactionRepository: TransactionRepository,
                       private val blockchainRepository: BlockchainRepository,
-                      private var socketSender: SocketSenderComponent,
+                      private val socketSender: SocketSenderComponent,
+                      private val walletComponent: WalletComponent,
                       private val log: Logger) {
 
     companion object {
@@ -30,7 +31,7 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
 
     // Launch miner
     fun startMining(): Boolean {
-        if (running) return false
+        if (running || walletComponent.wallet == null) return false
         running = true
 
         mine()
@@ -90,6 +91,9 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
         socketSender.broadcastFf(BlockMinedPayload(block).get())
 
         // TODO : Reward miner
+//        walletComponent.wallet?.let {
+//            it.amount = 5
+//        }
 
         // Call to a new block mining
         mine()
