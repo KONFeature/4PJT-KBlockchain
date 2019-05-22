@@ -75,6 +75,7 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
                     Completable.complete()
                 }
                 P2pPayload.isAddWallet(payload) -> walletComponent.receivedPayload(payload)
+                P2pPayload.isUpdateWallet(payload) -> walletComponent.receivedPayload(payload)
                 P2pPayload.isPublishTransaction(payload) -> walletComponent.receivedTransaction(payload)
                 P2pPayload.isBlockMined(payload) -> miningComponent.receivedBlockMined(payload)
                 else -> Completable.error(P2pException.unknownOperationException(payload))

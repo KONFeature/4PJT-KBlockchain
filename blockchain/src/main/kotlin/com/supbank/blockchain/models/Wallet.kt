@@ -36,8 +36,9 @@ data class Wallet(
     var id: Long = 0
 
     // Amount of coin in the wallet confirmed (deduced by the block present in the chain)
-    @Transient
-    val amount: Long = 0L
+    @Expose
+    @Column(nullable = false)
+    var amount: Long = 0L
 
     // Amount of coin in the wallet for transaction not mined
     @Transient

@@ -11,6 +11,7 @@ import com.supbank.blockchain.utils.GsonUtils
 import com.supbank.blockchain.utils.P2pException
 import com.supbank.blockchain.utils.p2p.wallet.AddWalletPayload
 import com.supbank.blockchain.utils.p2p.wallet.PublishTransactionPayload
+import com.supbank.blockchain.utils.p2p.wallet.UpdateWalletPayload
 import io.reactivex.Completable
 import io.rsocket.kotlin.Payload
 import org.slf4j.Logger
@@ -22,6 +23,10 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
                        private val walletRepository: WalletRepository,
                        private val transactionRepository: TransactionRepository,
                        private val log: Logger) {
+
+    companion object {
+        const val MINIG_REWARD = 10
+    }
 
     @Value("\${wallet.key.path}")
     lateinit var keyPath: String
@@ -85,7 +90,7 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
     /**
      * Function used to create a new transaction
      */
-    public fun newTransaction(msg: String, amount: Int, receiverId : Long) : Boolean {
+    fun newTransaction(msg: String, amount: Int, receiverId : Long) : Boolean {
         // Check sending wallet
         if(wallet == null) {
             log.warn("No wallet loaded, unable to create a transaction aborting")
@@ -122,29 +127,30 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
     /**
      * Function used to add a wallet when received it from p2p network
      */
-    public fun receivedPayload(payload: Payload) : Completable {
+    fun receivedPayload(payload: Payload) : Completable {
         return try {
-            log.info("Adding a new wallet")
             val wallet = GsonUtils.getWalletCustom().fromJson(payload.dataUtf8, Wallet::class.java)
             if(!walletRepository.existsById(wallet.id)) {
-                walletRepository.save(wallet)
-                Completable.complete()
+                log.info("Adding a new wallet to the database")
             } else {
-                Completable.error(P2pException.walletKnownException(payload))
+                log.info("Wallet known, refreshing it")
             }
+            walletRepository.save(wallet)
+            Completable.complete()
         } catch(e: JsonSyntaxException) {
             log.error("Unable to parse to payload to a wallet object {}, {}", payload.dataUtf8, e.message)
-            Completable.error(P2pException.unableToPaseException(payload, e.message))
+            Completable.error(P2pException.unableToParseException(payload, e.message))
         }
     }
 
     /**
      * Function used to add a transaction received from the p2p network
      */
-    public fun receivedTransaction(payload: Payload) : Completable {
+    fun receivedTransaction(payload: Payload) : Completable {
         return try {
             val transaction = Gson().fromJson(payload.dataUtf8, Transaction::class.java)
             if(!transactionRepository.existsById(transaction.id)) {
+                log.info("Received a new transaction $transaction")
                 transactionRepository.save(transaction)
                 Completable.complete()
             } else {
@@ -152,7 +158,19 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
             }
         } catch(e: JsonSyntaxException) {
             log.error("Unable to parse to payload to a wallet object {}, {}", payload.dataUtf8, e.message)
-            Completable.error(P2pException.unableToPaseException(payload, e.message))
+            Completable.error(P2pException.unableToParseException(payload, e.message))
+        }
+    }
+
+    /**
+     * Function used to reward the miner who has mined a block
+     * TODO : Propagate change
+     */
+    fun rewardMiningWallet() {
+        wallet?.let {
+            it.amount += MINIG_REWARD
+            walletRepository.save(it)
+            socketSender.broadcastFf(UpdateWalletPayload(it).get())
         }
     }
 

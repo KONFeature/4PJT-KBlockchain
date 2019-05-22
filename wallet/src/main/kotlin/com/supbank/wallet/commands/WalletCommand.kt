@@ -40,8 +40,8 @@ class WalletCommand(private val blockchainService: BlockchainService) {
      * Function used to call the publish transaction wallet method of the blockchain
      */
     @ShellMethod("Creation d'une transaction")
-    fun transaction() : String {
-        val result = blockchainService.repository.loadWallet().execute()
+    fun transaction(receiverId: Long, amount: Int, message: String) : String {
+        val result = blockchainService.repository.publishTransaction(message, amount, receiverId).execute()
         return if(result.isSuccessful) {
             result.body()?:"Aucune réponse"
         } else {

@@ -90,10 +90,8 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
         // Send the mined block to other node
         socketSender.broadcastFf(BlockMinedPayload(block).get())
 
-        // TODO : Reward miner
-//        walletComponent.wallet?.let {
-//            it.amount = 5
-//        }
+        // Reward miner
+        walletComponent.rewardMiningWallet()
 
         // Call to a new block mining
         mine()
@@ -103,12 +101,29 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
      * Received a mined block from p2p network
      */
     fun receivedBlockMined(payload: Payload) : Completable {
-        try {
+        return try {
             val block: Block? = Gson().fromJson(payload.dataUtf8, Block::class.java)
-            // TODO : Check last hash corresponding to last block in blockchain, else abort add and resync
+            block?.let {
+                // Update transaction of the block
+                it.transactions.forEach {transactionReceived ->
+                    val transactionOpt = transactionRepository.findById(transactionReceived.id)
+                    if(transactionOpt.isPresent) {
+                        transactionOpt.get().mined = true
+                        transactionRepository.save(transactionOpt.get())
+                    } else {
+                        log.warn("Unable to refresh the transaction present in the block received")
+                    }
+                }
+
+                // TODO : Assert that the transaction are present in that part
+                // save the block
+                log.info("Saving a new mined block")
+                blockchainRepository.save(it)
+            }
+            Completable.complete()
         } catch(e: JsonSyntaxException) {
             log.error("Unable to parse to payload to a block object {}, {}", payload.dataUtf8, e.message)
+            Completable.error(P2pException.exception(payload, e.message))
         }
-        return Completable.error(P2pException.unknownOperationException(payload))
     }
 }

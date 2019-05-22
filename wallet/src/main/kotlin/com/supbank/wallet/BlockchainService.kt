@@ -48,7 +48,9 @@ interface Repository {
     fun loadWallet() : Call<String>
 
     @GET("wallet/publish")
-    fun publishTransaction() : Call<String>
+    fun publishTransaction(@Query(value = "message", encoded = true) msg: String,
+                           @Query(value = "amount") amount: Int,
+                           @Query(value = "receiver") receiverId: Long) : Call<String>
 
     @GET("wallet/miner")
     fun mining(@Query(value = "status") status: Boolean) : Call<Boolean>

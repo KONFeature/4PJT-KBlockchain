@@ -73,7 +73,7 @@ class SyncComponent(private val walletRepository: WalletRepository,
             }
         } catch (e: JsonSyntaxException) {
             log.error("Unable to parse to payload to a status object {}, {}", payload.dataUtf8, e.message)
-            Flowable.error(P2pException.unableToPaseException(payload, e.message))
+            Flowable.error(P2pException.unableToParseException(payload, e.message))
         }
     }
 
