@@ -1,8 +1,8 @@
-package com.supbank.blockchain.utils.p2p
+package com.supbank.blockchain.utils.p2p.sync
 
 import com.google.gson.Gson
 import com.supbank.blockchain.pojo.NodePojo
-import io.rsocket.kotlin.Payload
+import com.supbank.blockchain.utils.p2p.P2pPayload
 
 /**
  * Create a join payload

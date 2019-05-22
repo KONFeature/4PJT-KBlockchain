@@ -1,12 +1,13 @@
 package com.supbank.blockchain.components
 
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.supbank.blockchain.pojo.NodePojo
-import com.supbank.blockchain.repos.NodeRepository
 import com.supbank.blockchain.utils.P2pException
-import com.supbank.blockchain.utils.p2p.NewNodePayload
-import com.supbank.blockchain.utils.p2p.NodesPayload
+import com.supbank.blockchain.utils.p2p.sync.NewNodePayload
+import com.supbank.blockchain.utils.p2p.sync.NodesPayload
 import com.supbank.blockchain.utils.p2p.P2pPayload
+import com.supbank.blockchain.utils.p2p.sync.StatusPayload
 import io.reactivex.*
 import io.reactivex.schedulers.Schedulers
 import io.rsocket.kotlin.*
@@ -22,7 +23,10 @@ import javax.annotation.PostConstruct
  * Server socket, receive all the request comming from the node
  */
 @Component
-class SocketReceiverComponent(private var socketSender: SocketSenderComponent,
+class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
+                              private val walletComponent: WalletComponent,
+                              private val miningComponent: MiningComponent,
+                              private val syncComponent: SyncComponent,
                               private val log: Logger) {
 
     // Server that receive the request
@@ -59,13 +63,22 @@ class SocketReceiverComponent(private var socketSender: SocketSenderComponent,
         override fun fireAndForget(payload: Payload): Completable {
             log.debug("Server received f&f, get {}->{}", payload.dataUtf8, payload.metadataUtf8)
 
-            return if(P2pPayload.isNewNode(payload)) {
-                // Received new node
-                val node = Gson().fromJson(payload.dataUtf8, NodePojo::class.java)
-                socketSender.addClient(node)
-                Completable.complete()
-            } else {
-                Completable.error(P2pException.unknownOperationException(payload))
+            return when {
+                P2pPayload.isNewNode(payload) -> {
+                    // Received new node
+                    try {
+                        val node = Gson().fromJson(payload.dataUtf8, NodePojo::class.java)
+                        socketSender.addClient(node)
+                    } catch(e: JsonSyntaxException) {
+                        log.error("Unable to parse to payload to a node object {}, {}", payload.dataUtf8, e.message)
+                    }
+                    Completable.complete()
+                }
+                P2pPayload.isAddWallet(payload) -> walletComponent.receivedPayload(payload)
+                P2pPayload.isUpdateWallet(payload) -> walletComponent.receivedPayload(payload)
+                P2pPayload.isPublishTransaction(payload) -> walletComponent.receivedTransaction(payload)
+                P2pPayload.isBlockMined(payload) -> miningComponent.receivedBlockMined(payload)
+                else -> Completable.error(P2pException.unknownOperationException(payload))
             }
         }
 
@@ -77,13 +90,13 @@ class SocketReceiverComponent(private var socketSender: SocketSenderComponent,
         override fun requestStream(payload: Payload): Flowable<Payload> {
             log.debug("Server received rs get {}->{}", payload.dataUtf8, payload.metadataUtf8)
 
-            return if(P2pPayload.isJoin(payload)) {
-                // Received a join request
-                joinResponse(payload)
-            } else {
-                // Unknown operation request
-                log.warn("Unknown get request {}->{}", payload.dataUtf8, payload.metadataUtf8)
-                Flowable.error<Payload>(P2pException.unknownOperationException(payload))
+            return when {
+                P2pPayload.isJoin(payload) -> // Received a join request
+                    joinResponse(payload)
+                P2pPayload.isStatus(payload) -> // Received a status of an other node in the network
+                    syncComponent.receivedStatus(payload)
+                else -> // Unknown operation request
+                    Flowable.error<Payload>(P2pException.unknownOperationException(payload))
             }
         }
     })
@@ -117,7 +130,6 @@ class SocketReceiverComponent(private var socketSender: SocketSenderComponent,
             if(toSend.isNotEmpty())
                 emitter.onNext(NodesPayload(toSend).get())
 
-            // TODO : Return blockchain, transactions and wallets status
             emitter.onComplete()
         }, BackpressureStrategy.BUFFER)
     }
