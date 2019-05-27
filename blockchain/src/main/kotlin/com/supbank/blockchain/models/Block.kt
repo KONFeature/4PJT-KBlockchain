@@ -12,7 +12,7 @@ data class Block(
         @Column(nullable = false)
         var hash: String = "",
 
-        @OneToMany
+        @OneToMany(fetch = FetchType.EAGER)
         @JoinTable(uniqueConstraints = [UniqueConstraint(columnNames = ["transactions_id"])])
         val transactions: Collection<Transaction>,
 

@@ -11,6 +11,30 @@ import retrofit2.Response
 class WalletCommand(private val blockchainService: BlockchainService) {
 
     /**
+     * Function used to change the url and the port of the blockchain
+     */
+    @ShellMethod("Definition de l'url et du port de la blockchain", key = ["set", "definir"])
+    fun setBlockchain(url : String, port: Int) : String {
+        blockchainService.url = url
+        blockchainService.port = port
+        blockchainService.create()
+        return getBlockchain()
+    }
+
+    /**
+     * Function used to change the url and the port of the blockchain
+     */
+    @ShellMethod("Methode permettant de voir l'url et le port de la blockchain", key = ["get", "voir"])
+    fun getBlockchain() : String {
+        val result = blockchainService.repository.getWallet().execute()
+        return if(result.isSuccessful) {
+            "Url : ${blockchainService.url}, port : ${blockchainService.port}, wallet charger : ${result.body()?:"aucun wallet"}"
+        } else {
+            "Url : ${blockchainService.url}, port : ${blockchainService.port}, wallet charger : aucun wallet"
+        }
+    }
+
+    /**
      * Function used to call the create wallet method of the blockchain
      */
     @ShellMethod("Creation d'un wallet sur la blockchain")

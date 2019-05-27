@@ -3,6 +3,9 @@ package com.supbank.blockchain.controllers
 import com.supbank.blockchain.components.MiningComponent
 import com.supbank.blockchain.components.SocketSenderComponent
 import com.supbank.blockchain.components.WalletComponent
+import com.supbank.blockchain.models.Transaction
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
 import org.slf4j.Logger
 import org.springframework.web.bind.annotation.*
 
@@ -11,15 +14,22 @@ import org.springframework.web.bind.annotation.*
  */
 @RestController
 @RequestMapping("/wallet")
-class WalletController(private val sender: SocketSenderComponent,
-                       private val walletComponent: WalletComponent,
+class WalletController(private val walletComponent: WalletComponent,
                        private val miningComponent: MiningComponent,
                        private val log: Logger) {
 
     @GetMapping("/create")
     fun create(@RequestParam("name") name: String) : String {
         // Create new wallet
-        val wallet = walletComponent.create(name)
+        val wallet = walletComponent.create(name, null, null)
+        return wallet?.let { "Wallet created : $it" }?:kotlin.run { "Error during wallet creation" }
+    }
+
+    @PostMapping("/create")
+    fun createPost(@RequestParam("name") name: String,
+                   @RequestParam("mail") mail: String,
+                   @RequestParam("token") token: String) : String {
+        val wallet = walletComponent.create(name, mail, token)
         return wallet?.let { "Wallet created : $it" }?:kotlin.run { "Error during wallet creation" }
     }
 
@@ -54,6 +64,14 @@ class WalletController(private val sender: SocketSenderComponent,
         } else {
             miningComponent.stopMining()
         }
+    }
+
+    @GetMapping("/transactions")
+    fun transaction() : Flowable<Transaction> {
+        return Flowable.create({emitter ->
+            walletComponent.getWalletTransactions().forEach { emitter.onNext(it) }
+            emitter.onComplete()
+        }, BackpressureStrategy.BUFFER)
     }
 
 }

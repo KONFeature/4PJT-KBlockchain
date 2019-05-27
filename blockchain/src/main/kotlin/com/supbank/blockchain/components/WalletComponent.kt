@@ -36,7 +36,7 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
     /**
      * Function used to create a wallet
      */
-    public fun create(name: String) : Wallet? {
+    public fun create(name: String, mail: String?, token: String?) : Wallet? {
         // Destroy current wallet
         wallet = null
 
@@ -45,6 +45,8 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
             // Create the wallet from the keypair
             log.info("Successfully created a keypair at the location {}", keyPath)
             wallet = Wallet(name, keyPair.public, keyPair.private)
+            mail?.let { wallet?.mail = it }
+            token?.let { wallet?.token = it }
 
             // Send the wallet to the other node
             wallet?.let {
@@ -164,7 +166,6 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
 
     /**
      * Function used to reward the miner who has mined a block
-     * TODO : Propagate change
      */
     fun rewardMiningWallet() {
         wallet?.let {
@@ -174,4 +175,18 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
         }
     }
 
+    /**
+     * Function used to fetch all the transactions associated with a wallet
+     */
+    fun getWalletTransactions() : List<Transaction> {
+        return wallet?.let {
+            val res = ArrayList<Transaction>()
+            res.addAll(transactionRepository.findAllBySenderId(it.id))
+            res.addAll(transactionRepository.findAllByReceiverId(it.id))
+            res
+        }?:run {
+            log.warn("No wallet loaded, returning an empty transaction list")
+            ArrayList<Transaction>()
+        }
+    }
 }

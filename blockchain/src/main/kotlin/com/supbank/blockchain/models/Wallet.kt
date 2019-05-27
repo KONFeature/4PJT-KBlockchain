@@ -44,6 +44,12 @@ data class Wallet(
     @Transient
     val futurAmount: Long = 0L
 
+    @Column
+    var mail: String? = null
+
+    @Column
+    var token: String? = null
+
     override fun toString(): String {
         return "name: $name, id: $id, amount: $amount"
     }

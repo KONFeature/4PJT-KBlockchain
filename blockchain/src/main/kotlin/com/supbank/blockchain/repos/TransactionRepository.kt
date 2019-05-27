@@ -7,6 +7,10 @@ interface TransactionRepository: CrudRepository<Transaction, Long> {
 
     fun findAllByMinedFalse() : List<Transaction>
 
+    fun findAllBySenderId(senderId: Long) : List<Transaction>
+
+    fun findAllByReceiverId(receivedId: Long) : List<Transaction>
+
     fun getTopByOrderByIdDesc() : Transaction?
 
 }

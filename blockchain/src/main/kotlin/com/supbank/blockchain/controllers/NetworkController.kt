@@ -16,28 +16,10 @@ import org.springframework.web.bind.annotation.RestController
 class NetworkController(private val sender: SocketSenderComponent,
                         private val log: Logger) {
 
-    var clients = ArrayList<Node>()
-
-    /**
-     * Join the blockchain network
-     */
-    @GetMapping("/join")
-    fun joinNetwork() : String {
-        return "To implement"
-    }
-
-    /**
-     * Boardcast the blockchain network
-     */
-    @GetMapping("/broadcast")
-    fun broadcastNetwork() : String {
-        return "To implement"
-    }
-
     /**
      * List all the known nodes by this host
      */
     @PostMapping("/nodes")
-    fun listNodes() = clients
+    fun listNodes() = sender.nodes()
 
 }

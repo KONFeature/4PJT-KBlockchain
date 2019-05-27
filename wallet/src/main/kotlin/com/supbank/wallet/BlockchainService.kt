@@ -15,9 +15,12 @@ import javax.annotation.PostConstruct
 class BlockchainService {
 
     companion object {
-        // TODO : Load the base URL dynamically (terminal ? or properties ?)
-        const val BASE_URL = "http://localhost:8070/"
+        const val BASE_URL = "localhost"
+        const val BASE_PORT = 8070
     }
+
+    var url : String? = null
+    var port : Int? = null
 
     lateinit var repository: Repository
 
@@ -26,11 +29,14 @@ class BlockchainService {
      */
     @PostConstruct
     fun create() {
+        if(url == null) url = BASE_URL
+        if(port == null) port = BASE_PORT
+
         val client = OkHttpClient.Builder()
                 .build()
 
         val retrofit = Retrofit.Builder()
-                .baseUrl(BASE_URL)
+                .baseUrl("http://$url:$port/")
                 .addConverterFactory(ScalarsConverterFactory.create())
                 .client(client)
                 .build()
@@ -46,6 +52,9 @@ interface Repository {
 
     @GET("wallet/load")
     fun loadWallet() : Call<String>
+
+    @GET("wallet/status")
+    fun getWallet() : Call<String>
 
     @GET("wallet/publish")
     fun publishTransaction(@Query(value = "message", encoded = true) msg: String,
