@@ -67,6 +67,7 @@ class SocketSenderComponent(private val log: Logger,
                 .observeOn(Schedulers.io())
                 .subscribe({ rSocket ->
                     log.info("Sending join request on known node {}:{}", knownHost, knownPort)
+                    clients[NodePojo(knownHost, knownPort)] = rSocket
                     join(rSocket)
                 }, { error ->
                     log.warn("Error when sending join request to the known node {}:{}, {}", knownHost, knownPort, error)

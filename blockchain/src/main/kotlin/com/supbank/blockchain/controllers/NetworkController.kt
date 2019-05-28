@@ -6,7 +6,7 @@ import org.slf4j.Logger
 import org.springframework.web.bind.annotation.*
 
 /**
- * P2p
+ * Controller for all the network infos
  */
 @RestController
 @CrossOrigin(origins = ["*"])

@@ -160,7 +160,6 @@ class SyncComponent(private val walletRepository: WalletRepository,
                         }
                     }
                     SyncField.TRANSACTION -> {
-                        // TODO : Upate mined transaction here ?
                         response.value.forEach { respVal ->
                             if (respVal is Transaction) {
                                 transactionRepository.save(respVal)

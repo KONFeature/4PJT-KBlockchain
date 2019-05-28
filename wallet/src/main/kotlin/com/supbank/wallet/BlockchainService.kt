@@ -1,5 +1,6 @@
 package com.supbank.wallet
 
+import com.supbank.wallet.dto.Node
 import com.supbank.wallet.dto.Transaction
 import com.supbank.wallet.dto.Wallet
 import okhttp3.Interceptor
@@ -66,4 +67,7 @@ interface Repository {
 
     @GET("wallet/miner")
     fun mining(@Query(value = "status") status: Boolean) : Call<Boolean>
+
+    @GET("network/nodes")
+    fun nodes() : Call<List<Node>>
 }
