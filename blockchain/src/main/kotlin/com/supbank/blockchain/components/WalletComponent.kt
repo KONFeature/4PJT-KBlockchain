@@ -92,25 +92,25 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
     /**
      * Function used to create a new transaction
      */
-    fun newTransaction(msg: String, amount: Int, receiverId : Long) : Boolean {
+    fun newTransaction(msg: String, amount: Int, receiverId : Long) : Transaction? {
         // Check sending wallet
         if(wallet == null) {
             log.warn("No wallet loaded, unable to create a transaction aborting")
-            return false
+            return null
         }
 
         // Check receiver wallet
         val receiverOpt = walletRepository.findById(receiverId)
         if(!receiverOpt.isPresent) {
             log.warn("No receiver founded with the id {}, aborting the creation of thetransaction", receiverId)
-            return false
+            return null
         }
         val receiver = receiverOpt.get()
 
         // Check balance
         if(wallet!!.amount < amount) {
             log.warn("Not enough coins on ur wallet to create the transaction")
-            return false
+            return null
         }
 
         // Create the transaction
@@ -123,7 +123,7 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
         socketSender.broadcastFf(PublishTransactionPayload(transaction).get())
 
         log.info("Newly created transaction : $transaction")
-        return true
+        return transaction
     }
 
     /**

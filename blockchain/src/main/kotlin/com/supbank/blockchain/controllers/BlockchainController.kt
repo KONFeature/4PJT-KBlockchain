@@ -16,6 +16,7 @@ import java.util.*
  * Handle blockcahin sync / fetch
  */
 @RestController
+@CrossOrigin(origins = ["*"])
 @RequestMapping("/blockchain")
 class BlockchainController(private val miningComponent: MiningComponent,
                            private val blockchainRepository: BlockchainRepository,
@@ -40,12 +41,12 @@ class BlockchainController(private val miningComponent: MiningComponent,
     }
 
     @PostMapping("/block")
-    fun getBlock(@RequestParam("id") id: Long): Flowable<Block> {
-        return Flowable.create({emitter ->
-            val blockOpt = blockchainRepository.findById(id)
-            if(blockOpt.isPresent) emitter.onNext(blockOpt.get())
-            emitter.onComplete()
-        }, BackpressureStrategy.BUFFER)
+    fun getBlock(@RequestParam("id") id: Long): Block? {
+        val blockOpt = blockchainRepository.findById(id)
+        return if(blockOpt.isPresent)
+            blockOpt.get()
+        else
+            null
     }
 
     @PostMapping("/transactions")
