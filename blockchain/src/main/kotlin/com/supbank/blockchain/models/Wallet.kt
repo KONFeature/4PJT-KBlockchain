@@ -1,5 +1,6 @@
 package com.supbank.blockchain.models
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.google.gson.annotations.Expose
 import com.supbank.blockchain.utils.CryptoUtil
 import com.supbank.blockchain.utils.GsonUtils
@@ -24,9 +25,11 @@ data class Wallet(
         @Lob
         @Column(nullable = false)
         @Convert(converter = PublicKeyConverter::class)
+        @JsonIgnore
         val pubKey: PublicKey,
 
         @Transient
+        @JsonIgnore
         var privKey: PrivateKey
 )
 {
@@ -40,9 +43,11 @@ data class Wallet(
     @Column(nullable = false)
     var amount: Long = 0L
 
-    // Amount of coin in the wallet for transaction not mined
-    @Transient
-    val futurAmount: Long = 0L
+    @Column
+    var mail: String? = null
+
+    @Column
+    var token: String? = null
 
     override fun toString(): String {
         return "name: $name, id: $id, amount: $amount"

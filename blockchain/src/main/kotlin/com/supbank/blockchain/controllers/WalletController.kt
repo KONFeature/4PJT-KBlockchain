@@ -3,48 +3,54 @@ package com.supbank.blockchain.controllers
 import com.supbank.blockchain.components.MiningComponent
 import com.supbank.blockchain.components.SocketSenderComponent
 import com.supbank.blockchain.components.WalletComponent
+import com.supbank.blockchain.models.Transaction
+import com.supbank.blockchain.models.Wallet
+import com.supbank.blockchain.pojo.CreateWalletRequest
+import io.reactivex.BackpressureStrategy
+import io.reactivex.Flowable
 import org.slf4j.Logger
+import org.springframework.http.MediaType
+import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
 
 /**
  * Handle creation / transaction
  */
 @RestController
+@CrossOrigin(origins = ["*"])
 @RequestMapping("/wallet")
-class WalletController(private val sender: SocketSenderComponent,
-                       private val walletComponent: WalletComponent,
+class WalletController(private val walletComponent: WalletComponent,
                        private val miningComponent: MiningComponent,
                        private val log: Logger) {
 
     @GetMapping("/create")
-    fun create(@RequestParam("name") name: String) : String {
+    fun create(@RequestParam("name") name: String) : Wallet? {
         // Create new wallet
-        val wallet = walletComponent.create(name)
-        return wallet?.let { "Wallet created : $it" }?:kotlin.run { "Error during wallet creation" }
+        return walletComponent.create(name, null, null)
+    }
+
+    @PostMapping("/create", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun createPost(@RequestBody request: CreateWalletRequest) : Wallet? {
+        log.error("$request")
+        return walletComponent.create(request.name, request.mail, request.token)
     }
 
     @GetMapping("/load")
-    fun load() : String {
+    fun load() : Wallet? {
         // Try to load a wallet
-        val wallet = walletComponent.load()
-        return wallet?.let { "Wallet loaded : $it" }?:kotlin.run { "Error during wallet loading" }
+        return walletComponent.load()
     }
 
     @GetMapping("/status")
-    fun status() : String {
-        val wallet = walletComponent.wallet
-        return wallet?.let { "Current wallet : $it" }?:kotlin.run { "No wallet loaded" }
+    fun status() : Wallet? {
+        return walletComponent.wallet
     }
 
     @GetMapping("/publish")
     fun publishTransaction(@RequestParam("message") msg: String,
                            @RequestParam("amount") amount: Int,
-                           @RequestParam("receiver") receiverId: Long) : String {
-        val transactionStatus = walletComponent.newTransaction(msg, amount, receiverId)
-        return if(transactionStatus)
-            "Transaction successfully created and submitted on the network"
-        else
-            "Error during the creation of the transaction, please check the blockchain log"
+                           @RequestParam("receiver") receiverId: Long) : Transaction? {
+        return walletComponent.newTransaction(msg, amount, receiverId)
     }
 
     @GetMapping("/miner")
@@ -54,6 +60,14 @@ class WalletController(private val sender: SocketSenderComponent,
         } else {
             miningComponent.stopMining()
         }
+    }
+
+    @GetMapping("/transactions")
+    fun transaction() : Flowable<Transaction> {
+        return Flowable.create({emitter ->
+            walletComponent.getWalletTransactions().forEach { emitter.onNext(it) }
+            emitter.onComplete()
+        }, BackpressureStrategy.BUFFER)
     }
 
 }

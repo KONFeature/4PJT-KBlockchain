@@ -11,6 +11,7 @@ import com.supbank.blockchain.utils.p2p.BlockMinedPayload
 import io.reactivex.Completable
 import io.rsocket.kotlin.Payload
 import org.slf4j.Logger
+import org.springframework.core.task.TaskExecutor
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
 
@@ -19,6 +20,7 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
                       private val blockchainRepository: BlockchainRepository,
                       private val socketSender: SocketSenderComponent,
                       private val walletComponent: WalletComponent,
+                      private val taskExecutor: TaskExecutor,
                       private val log: Logger) {
 
     companion object {
@@ -34,7 +36,9 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
         if (running || walletComponent.wallet == null) return false
         running = true
 
-        mine()
+        taskExecutor.execute {
+            mine()
+        }
         return running
     }
 
@@ -102,12 +106,19 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
      */
     fun receivedBlockMined(payload: Payload) : Completable {
         return try {
-            val block: Block? = Gson().fromJson(payload.dataUtf8, Block::class.java)
-            block?.let {
-                // Update transaction of the block
-                it.transactions.forEach {transactionReceived ->
-                    val transactionOpt = transactionRepository.findById(transactionReceived.id)
+            val rawBlock: Block? = Gson().fromJson(payload.dataUtf8, Block::class.java)
+            rawBlock?.let {block ->
+                val localTransaction = ArrayList<Transaction>()
+
+                // Get only the id of the transaction id
+                val transactionsId = block.transactions.map { transaction -> transaction.id }
+
+                // foreach id, find the corresponding local transaction
+                transactionsId.forEach {transactionIdReceived ->
+                    val transactionOpt = transactionRepository.findById(transactionIdReceived)
                     if(transactionOpt.isPresent) {
+                        localTransaction.add(transactionOpt.get())
+                        // Update local transaction
                         transactionOpt.get().mined = true
                         transactionRepository.save(transactionOpt.get())
                     } else {
@@ -115,10 +126,19 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
                     }
                 }
 
-                // TODO : Assert that the transaction are present in that part
+                // Map the local transactions to the block
+                if(block.transactions is ArrayList<Transaction>) {
+                    block.transactions.clear()
+                    block.transactions.addAll(localTransaction)
+                } else {
+                    log.warn("Unable to map the transactions to the received block")
+                }
+
                 // save the block
                 log.info("Saving a new mined block")
-                blockchainRepository.save(it)
+                blockchainRepository.save(block)
+            }?:kotlin.run {
+                log.warn("Unable to parse the received block")
             }
             Completable.complete()
         } catch(e: JsonSyntaxException) {

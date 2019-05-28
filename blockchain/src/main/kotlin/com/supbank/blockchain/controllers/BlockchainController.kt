@@ -3,46 +3,25 @@ package com.supbank.blockchain.controllers
 import com.supbank.blockchain.components.MiningComponent
 import com.supbank.blockchain.models.Block
 import com.supbank.blockchain.models.Transaction
+import com.supbank.blockchain.models.Wallet
+import com.supbank.blockchain.repos.BlockchainRepository
 import com.supbank.blockchain.repos.TransactionRepository
+import com.supbank.blockchain.repos.WalletRepository
+import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.util.*
 
 /**
  * Handle blockcahin sync / fetch
  */
 @RestController
+@CrossOrigin(origins = ["*"])
 @RequestMapping("/blockchain")
 class BlockchainController(private val miningComponent: MiningComponent,
-                           private val transactionRepository: TransactionRepository) {
-
-    @GetMapping("/all")
-    fun getAll(): Flowable<Block> {
-        val transactions1 = ArrayList<Transaction>()
-        transactions1.add(Transaction(1, 42, 13,  "test1"))
-        transactions1.add(Transaction(2, 13, 42,  "test2"))
-
-        val transactions2 = ArrayList<Transaction>()
-        transactions2.add(Transaction(3, 42, 13, "test3"))
-        transactions2.add(Transaction(4, 13, 42, "test4"))
-
-        return Flowable.just(
-                Block(
-                        "1313",
-                        "420",
-                        transactions1,
-                        13,
-                        Date().time),
-                Block(
-                        "420",
-                        "1313",
-                        transactions2,
-                        42,
-                        Date().time))
-    }
+                           private val blockchainRepository: BlockchainRepository,
+                           private val transactionRepository: TransactionRepository,
+                           private val walletRepository: WalletRepository) {
 
     @GetMapping("/miner/{action}")
     fun mining(@PathVariable action: String): Boolean {
@@ -53,18 +32,47 @@ class BlockchainController(private val miningComponent: MiningComponent,
         }
     }
 
-    @GetMapping("/test")
-    fun addTestValue() : String {
-        val transactions = ArrayList<Transaction>()
-        transactions.add(Transaction(1, 42, 13,  "test1"))
-        transactions.add(Transaction(2, 13, 42,  "test2"))
-        transactions.add(Transaction(3, 13, 42,  "test3"))
-        transactions.add(Transaction(4, 13, 42,  "test4"))
-        transactions.add(Transaction(5, 13, 42,  "test5"))
-        transactionRepository.saveAll(transactions)
-        return "test"
+    @PostMapping("/blocks")
+    fun getBlocks(): Flowable<Block> {
+        return Flowable.create({emitter ->
+            blockchainRepository.findAll().forEach { emitter.onNext(it) }
+            emitter.onComplete()
+        }, BackpressureStrategy.BUFFER)
     }
 
-    // TODO : Blockchain sync
-    // TODO : Blockchain validation
+    @PostMapping("/block")
+    fun getBlock(@RequestParam("id") id: Long): Block? {
+        val blockOpt = blockchainRepository.findById(id)
+        return if(blockOpt.isPresent)
+            blockOpt.get()
+        else
+            null
+    }
+
+    @PostMapping("/transactions")
+    fun getTransactions() : Flowable<Transaction> {
+        return Flowable.create({emitter ->
+            transactionRepository.findAll().forEach { emitter.onNext(it) }
+            emitter.onComplete()
+        }, BackpressureStrategy.BUFFER)
+    }
+
+    @PostMapping("/pool")
+    fun getTransactionsPool() : Flowable<Transaction> {
+        return Flowable.create({emitter ->
+            transactionRepository.findAll()
+                    .filter { !it.mined }
+                    .forEach { emitter.onNext(it) }
+            emitter.onComplete()
+        }, BackpressureStrategy.BUFFER)
+    }
+
+    @PostMapping("/wallets")
+    fun getWallets() : Flowable<Wallet> {
+        return Flowable.create({emitter ->
+            walletRepository.findAll()
+                    .forEach { emitter.onNext(it) }
+            emitter.onComplete()
+        }, BackpressureStrategy.BUFFER)
+    }
 }

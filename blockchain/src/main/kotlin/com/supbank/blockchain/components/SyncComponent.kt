@@ -47,18 +47,21 @@ class SyncComponent(private val walletRepository: WalletRepository,
             // Check wallet status
             val walletId = walletRepository.getTopByOrderByIdDesc()?.id ?: 0L
             if (walletId > syncStatus.walletLastId) {
+                log.info("Wallet behind : received id ${syncStatus.walletLastId} vs $walletId")
                 fieldsToSync[SyncField.WALLET] = syncStatus.walletLastId
             }
 
             // Check transaction pool status
             val transactionId = transactionRepository.getTopByOrderByIdDesc()?.id ?: 0L
             if (transactionId > syncStatus.transactionLastId) {
+                log.info("Transaction behind : received id ${syncStatus.transactionLastId} vs $transactionId")
                 fieldsToSync[SyncField.TRANSACTION] = syncStatus.transactionLastId
             }
 
             // Check blockchain status
             val blockId = blockchainRepository.getTopByOrderByIdDesc()?.id ?: 0L
             if (blockId > syncStatus.blockLastId) {
+                log.info("Blockchain behind : received id ${syncStatus.blockLastId} vs $blockId")
                 fieldsToSync[SyncField.BLOCKCHAIN] = syncStatus.blockLastId
             }
 
