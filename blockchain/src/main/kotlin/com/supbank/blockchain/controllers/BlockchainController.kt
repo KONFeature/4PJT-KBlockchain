@@ -4,6 +4,7 @@ import com.supbank.blockchain.components.MiningComponent
 import com.supbank.blockchain.models.Block
 import com.supbank.blockchain.models.Transaction
 import com.supbank.blockchain.models.Wallet
+import com.supbank.blockchain.pojo.BlockPojo
 import com.supbank.blockchain.repos.BlockchainRepository
 import com.supbank.blockchain.repos.TransactionRepository
 import com.supbank.blockchain.repos.WalletRepository
@@ -32,9 +33,9 @@ class BlockchainController(private val miningComponent: MiningComponent,
     }
 
     @PostMapping("/blocks")
-    fun getBlocks(): Flowable<Block> {
+    fun getBlocks(): Flowable<BlockPojo> {
         return Flowable.create({emitter ->
-            blockchainRepository.findAll().forEach { emitter.onNext(it) }
+            blockchainRepository.findAll().forEach { emitter.onNext(BlockPojo.fromBlock(it)) }
             emitter.onComplete()
         }, BackpressureStrategy.BUFFER)
     }
