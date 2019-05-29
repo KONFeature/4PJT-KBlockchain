@@ -28,3 +28,8 @@ HELP.md
 
 ### VS Code ###
 .vscode/
+
+### Blockchain Project ###
+*.log
+*.db
+*.key
