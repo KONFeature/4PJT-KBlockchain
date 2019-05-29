@@ -16,7 +16,10 @@ export class WalletService {
   }
 
   public walletStatus() {
-    return this.http.get(this.baseUrl +"wallet/load");
+    return this.http.get(this.baseUrl +"wallet/status");
+  }
 
+  public walletTransaction() {
+    return this.http.get(this.baseUrl + "wallet/transactions")
   }
 }

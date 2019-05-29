@@ -4,10 +4,10 @@ import { Router } from "@angular/router";
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { from } from 'rxjs';
-import { WalletService } from '../services/WalletService';
-import { NodeService } from '../services/Nodeservice';
-import { TransactionService } from '../services/TransactionService';
-import { BlocService } from '../services/BlocService';
+import { WalletService } from '../Services/WalletService';
+import { NodeService } from '../Services/NodeService';
+import { TransactionService } from '../Services/TransactionService';
+import { BlocService } from '../Services/BlocService';
 import {
   AuthService,
   FacebookLoginProvider,

@@ -1,9 +1,6 @@
-
-import { MdbTablePaginationComponent, MdbTableDirective } from 'PATH-TO-MDB-ANGULAR-HERE';
-
 import { Component, OnInit, ViewChild, HostListener, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { from } from 'rxjs';
-import { TransactionService } from '../services/TransactionService';
+import { TransactionService } from '../Services/TransactionService';
 import { Transaction } from '../Model/Transaction';
 @Component({
   selector: 'app-home',
@@ -26,11 +23,11 @@ export class HomeComponent {
       console.log(res);
       this.tableInfo = res;
     });
-    
+
   }
 
 
 
-  
+
 
 }
