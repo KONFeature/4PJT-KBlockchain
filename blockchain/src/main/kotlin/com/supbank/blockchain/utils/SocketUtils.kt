@@ -1,6 +1,5 @@
 package com.supbank.blockchain.utils
 
-import io.rsocket.kotlin.DefaultPayload
 import io.rsocket.kotlin.Payload
 
 /**

@@ -3,15 +3,12 @@ package com.supbank.wallet
 import com.supbank.wallet.dto.Node
 import com.supbank.wallet.dto.Transaction
 import com.supbank.wallet.dto.Wallet
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import org.springframework.stereotype.Service
 import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Query
 import javax.annotation.PostConstruct
 

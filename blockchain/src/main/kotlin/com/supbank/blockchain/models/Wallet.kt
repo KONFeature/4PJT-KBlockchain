@@ -3,12 +3,10 @@ package com.supbank.blockchain.models
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.google.gson.annotations.Expose
 import com.supbank.blockchain.utils.CryptoUtil
-import com.supbank.blockchain.utils.GsonUtils
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.util.*
 import javax.persistence.*
-import kotlin.jvm.Transient
 
 /**
  * Represent a wallet of the blockchain

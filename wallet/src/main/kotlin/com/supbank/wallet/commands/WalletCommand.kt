@@ -1,15 +1,10 @@
 package com.supbank.wallet.commands
 
-import com.google.gson.stream.MalformedJsonException
 import com.supbank.wallet.BlockchainService
 import com.supbank.wallet.dto.Transaction
 import com.supbank.wallet.dto.Wallet
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.lang.Exception
 
 @ShellComponent
 class WalletCommand(private val blockchainService: BlockchainService) {

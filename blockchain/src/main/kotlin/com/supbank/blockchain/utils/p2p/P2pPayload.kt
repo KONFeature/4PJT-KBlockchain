@@ -1,6 +1,9 @@
 package com.supbank.blockchain.utils.p2p
 
-import com.supbank.blockchain.utils.p2p.sync.*
+import com.supbank.blockchain.utils.p2p.sync.JoinPayload
+import com.supbank.blockchain.utils.p2p.sync.NewNodePayload
+import com.supbank.blockchain.utils.p2p.sync.NodesPayload
+import com.supbank.blockchain.utils.p2p.sync.StatusPayload
 import com.supbank.blockchain.utils.p2p.wallet.AddWalletPayload
 import com.supbank.blockchain.utils.p2p.wallet.PublishTransactionPayload
 import com.supbank.blockchain.utils.p2p.wallet.UpdateWalletPayload
