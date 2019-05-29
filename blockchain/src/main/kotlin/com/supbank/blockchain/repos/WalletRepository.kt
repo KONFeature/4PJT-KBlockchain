@@ -9,4 +9,8 @@ interface WalletRepository: CrudRepository<Wallet, Long> {
     fun getByPubKeyEquals(pubKey: PublicKey) : Wallet?
 
     fun getTopByOrderByIdDesc() : Wallet?
+
+    fun findByPubKeyLike(pubKey: PublicKey) : Wallet?
+
+    fun findAllByNameLikeOrMailLike(name: String, mail: String) : List<Wallet>
 }

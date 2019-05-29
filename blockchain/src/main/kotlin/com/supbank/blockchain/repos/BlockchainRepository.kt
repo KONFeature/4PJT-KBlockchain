@@ -7,4 +7,6 @@ interface BlockchainRepository: CrudRepository<Block, Long> {
 
     fun getTopByOrderByIdDesc() : Block?
 
+    fun findAllByHashLike(hash: String) : List<Block>
+
 }
