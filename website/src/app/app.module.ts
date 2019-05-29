@@ -17,6 +17,7 @@ import { TransactionService } from './Services/TransactionService';
 import { BlocService } from './Services/BlocService';
 import { Ng2SearchPipeModule } from 'ng2-search-filter';
 import {WalletComponent} from "./wallet/wallet.component";
+import { ConnectComponent } from './connect/connect.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import {WalletComponent} from "./wallet/wallet.component";
     HomeComponent,
     FetchDataComponent,
     SubscribeComponent,
-    WalletComponent
+    WalletComponent,
+    ConnectComponent
   ],
   imports: [
     SocialLoginModule,
@@ -37,6 +39,7 @@ import {WalletComponent} from "./wallet/wallet.component";
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'fetch-data', component: FetchDataComponent },
       { path: 'subscribe', component: SubscribeComponent },
+      { path: 'connect', component: ConnectComponent },
       { path: 'wallet', component: WalletComponent },
 
     ])

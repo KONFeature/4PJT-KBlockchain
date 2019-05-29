@@ -11,10 +11,12 @@
         </button>
         <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse mb-3" [ngClass]='{"show": isExpanded}'>
           <ul class="navbar-nav flex-grow">
-            <li class="nav-item" [routerLinkActive]='["link-active"]' style="margin-right:1em;" [routerLinkActiveOptions]='{ exact: true }'>
-              <button type="button" class="btn btn-info" data-toggle="modal" data-target="#exampleModal">
-                Connexion
-              </button>
+
+            <li *ngIf="showSearchBar == true" class="nav-item" [routerLinkActive]='["link-active"]'>
+              <button type="button" class="btn  btn-info" (click)="connect()">Connexion</button>
+            </li>
+            <li>
+
             </li>
             <li *ngIf="showSearchBar == true" class="nav-item" [routerLinkActive]='["link-active"]'>
               <button type="button" class="btn  btn-info" (click)="subscribe()">S'inscrire</button>
@@ -73,65 +75,7 @@
     </table>
     <div class="col-lg-2"></div>
   </div>
-  <div class="modal fade in show " id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
-    <div class="modal-dialog " role="document">
-      <div class="modal-content">
-        <div class="card shadow-lg">
 
-          <h5 class="card-header white-text text-center py-4" style="background-color:#f0f0f1">
-            <strong>Connexion</strong>
-          </h5>
-
-          <!--Card content-->
-          <div class="card-body px-lg-5 pt-0" style="margin-top:20px;">
-
-            <!-- Form -->
-            <form class="text-center" style="color: #757575;">
-
-              <!-- Email -->
-              <div class="md-form">
-                <input type="email" id="materialLoginFormEmail" class="form-control">
-                <label for="materialLoginFormEmail" style="color:#1a3c69">E-mail&nbsp;<span class="fas fa-at" id="basic-addon1" style="color:#1a3c69"></span></label>
-              </div>
-
-              <!-- Password -->
-              <div class="md-form">
-                <input type="password" id="materialLoginFormPassword" class="form-control">
-                <label for="materialLoginFormPassword">Mot de passe&nbsp;<span class="fas fa-key" id="basic-addon1" style="color:#1a3c69"></span></label>
-              </div>
-
-              <div class="d-flex justify-content-around">
-
-              </div>
-
-              <!-- Sign in button -->
-              <button class="btn btn-outline-info btn-rounded btn-block my-4 waves-effect z-depth-0" type="submit">Connexion</button>
-
-              <!-- Register -->
-              <p class="text-center">
-                Pas encore membre?
-                <a class="close text-info" data-dismiss="modal" [routerLink]='["/subscribe"]' style="font-size:1em; float:none">Inscrivez-vous!</a>
-              </p>
-
-              <!-- Social login -->
-              <p>or sign in with:</p>
-              <a type="button" data-toggle="tooltip" data-placement="right" title="Connexion avec Facebook" class="btn-floating btn-fb btn-sm btn-info text-light">
-                <i class="fab fa-facebook-f fa-2x"></i>
-              </a>
-              <a type="button" data-toggle="tooltip" data-placement="right" title="Connexion avec Google" class="btn-floating btn-git btn-sm btn-info text-light">
-                <i class="fab fa-google fa-2x"></i>
-              </a>
-
-            </form>
-            <!-- Form -->
-
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-  </div>
 
 
 
