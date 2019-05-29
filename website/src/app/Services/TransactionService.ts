@@ -6,15 +6,21 @@ export class TransactionService {
   constructor(private http: HttpClient) { }
   baseUrl: string = "http://10.17.16.208:8071/";
   public getTransactions() {
-    let header = new HttpHeaders().set("Access-Control-Allow-Origin", "*")
-    return this.http.post(this.baseUrl+"blockchain/transactions", header)
+    return this.http.post(this.baseUrl+"blockchain/transactions", null)
   }
 
   public getTransactionPool() {
-    let header = new HttpHeaders().set("Access-Control-Allow-Origin", "*")
     return this.http.post(this.baseUrl+"blockchain/pool", null).subscribe({
       next(response) { console.log(response); },
 
     });
+  }
+
+  public sendTransaction(receiverId: number, amount: number, message: string) {
+    let params = new HttpParams()
+      .set("receiver", receiverId.toString())
+      .set("amount", amount.toString())
+      .set("message", message);
+    return this.http.get(this.baseUrl + "wallet/publish", { params : params})
   }
 }

@@ -1,17 +1,97 @@
+<div *ngIf="dataLoaded | async" class="container">
 
-<!--Wallet information & create transaction part-->
-<div class="container">
+    <!--Wallet information  part-->
+    <div class="card">
+        <div class="card-header">
+            <h2>Votre wallet</h2>
+        </div>
+        <div class="card-body">
+            <h4>Nom : {{ wallet.name }}</h4>
+            <h4>ID : {{ wallet.id }}</h4>
+            <h4>Supcoins : {{ wallet.amount }}</h4>
+            <p *ngIf="wallet.mail != null" class="lead">Mail : {{ wallet.mail }}</p>
+        </div>
+    </div><br>
 
-  <div *ngIf="wallet != null">
+    <!--Wallet create transaction part-->
+    <div class="card">
+        <div class="card-header">
+            <h2>Création d'une transaction</h2>
+        </div>
+        <div class="card-body">
+            <form>
+                <div class="form-group">
+                    <label for="inputReceiverId">ID du wallet de destination</label>
+                    <input type="number" class="form-control" id="inputReceiverId" aria-describedby="receiverIdHelp" placeholder="ID du destinataire" [(ngModel)]="trReceiverId" [ngModelOptions]="{standalone: true}" required>
+                    <small id="receiverIdHelp" class="form-text text-muted">L'ID du wallet cible de cette transaction.</small>
+                </div>
+                <div class="form-group">
+                    <label for="inputAmount">Montant de la transaction (en SupCoin)</label>
+                    <input type="number" class="form-control" id="inputAmount" placeholder="Montant" [(ngModel)]="trAmount" [ngModelOptions]="{standalone: true}" required>
+                </div>
+                <div class="form-group">
+                    <label for="inputMessage">Message a envoyée avec la transaction</label>
+                    <input type="text" class="form-control" id="inputMessage" aria-describedby="messageHelp" placeholder="Message accompagnant la transaction" [(ngModel)]="trMessage" [ngModelOptions]="{standalone: true}" required>
+                    <small id="messageHelp" class="form-text text-muted">Votre message seras crypté et lisible uniquement pas le destinataire.</small>
+                </div>
+                <button class="btn btn-primary" (click)="createTransaction()">Envoyer</button>
+            </form>
+        </div>
+    </div><br>
 
-    {{ wallet.name }}
+    <!--Wallet transactions done-->
+    <div>
+        <h1>Transaction recus</h1>
+        <table id="receivedTable" class="table table-striped  table-sm col-lg-8 shadow-lg"
+               style="margin-top:1em; border-radius: 5px 5px;">
+            <thead style="background-color:#00285c; border-top-left-radius: 40px 40px;">
+            <tr>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">ID</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Message</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Montant</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Id lanceur</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Minée</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Timestamp</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let t of receivedTransactions">
+                <th class="text-center" scope="row">{{t.id}}</th>
+                <td class="text-center">{{t.message.substring(0, 20)}}...</td>
+                <th class="text-center" scope="row">{{t.amount}}</th>
+                <td class="text-center">{{t.senderId}}</td>
+                <td class="text-center">{{t.mined}}</td>
+                <td class="text-center">{{t.timestamp}}</td>
+                <td class="text-center"><button class="btn btn-primary">Lire</button></td>
+            </tr>
+            </tbody>
+        </table>
 
-  </div>
 
-</div>
-
-<!--Wallet transactions done-->
-<div class="container">
-
-
+        <h1>Transaction envoyé</h1>
+        <table id="sendedTable" class="table table-striped  table-sm col-lg-8 shadow-lg"
+               style="margin-top:1em; border-radius: 5px 5px;">
+            <thead style="background-color:#00285c; border-top-left-radius: 40px 40px;">
+            <tr>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">ID</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Message</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Montant</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Id receveur</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Minée</th>
+                <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Timestamp</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let t of sendedTransactions">
+                <th class="text-center" scope="row">{{t.id}}</th>
+                <td class="text-center">{{t.message.substring(0, 20)}}...</td>
+                <th class="text-center" scope="row">{{t.amount}}</th>
+                <td class="text-center">{{t.receiverId}}</td>
+                <td class="text-center">{{t.mined}}</td>
+                <td class="text-center">{{t.timestamp}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
