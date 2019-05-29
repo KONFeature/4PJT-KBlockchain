@@ -8,6 +8,7 @@ import org.springframework.context.annotation.PropertySources
 import org.springframework.web.reactive.socket.client.WebSocketClient
 
 @PropertySources(*[
+	PropertySource("file:blockchain.properties"),
 	PropertySource("classpath:application.properties")
 ])
 @SpringBootApplication
