@@ -6,7 +6,7 @@ data class BlockPojo(val prevHash: String,
                      val hash: String,
                      val timestamp: Long,
                      val id: Long,
-                     val transactionCount: Int,
+                     val transactionsCount: Int,
                      val nonce: Long) {
     companion object {
         fun fromBlock(block: Block) : BlockPojo =
