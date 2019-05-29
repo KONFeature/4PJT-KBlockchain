@@ -24,6 +24,9 @@ class SyncComponent(private val walletRepository: WalletRepository,
                     private val blockchainRepository: BlockchainRepository,
                     private val log: Logger) {
 
+    // Block that we havn't added to the blockchain yet
+    private val blockPool = ArrayList<Block>()
+
     /**
      * Function used to get the current status of the blockchain
      */
@@ -152,10 +155,9 @@ class SyncComponent(private val walletRepository: WalletRepository,
             syncResponse.forEach { response ->
                 when (response.key) {
                     SyncField.BLOCKCHAIN -> {
-                        // TODO : Check blockchain integrity here ?
                         response.value.forEach { respVal ->
                             if (respVal is Block) {
-                                blockchainRepository.save(respVal)
+                                receivedBlock(respVal)
                             }
                         }
                     }
@@ -177,6 +179,31 @@ class SyncComponent(private val walletRepository: WalletRepository,
             }
         } catch (e: JsonSyntaxException) {
             log.error("Error occured during sync, unable to parse response {}", e.message)
+        }
+    }
+
+    /**
+     * Function called when we receive a new block, this function check the integrity of the blockchain
+     */
+    fun receivedBlock(block: Block) {
+        val lastBlock = blockchainRepository.getTopByOrderByIdDesc()
+
+        // Check that the block we received correspond to the last block
+        if(block.prevHash == lastBlock?.hash?:"0") {
+            blockchainRepository.save(block)
+
+            // Explore the pool and add all the block
+            var blockInPool = blockPool.firstOrNull { it.prevHash == block.hash }
+            while(blockInPool != null) {
+                log.info("Founded a block in pool that match the current block hash, adding it to blockchain")
+                blockchainRepository.save(blockInPool)
+                blockPool.remove(blockInPool)
+                val hash = blockInPool.hash
+                blockInPool = blockPool.firstOrNull { it.prevHash == hash }
+            }
+        } else {
+            log.info("Received block previous hash doesn't correspond current last block hash, adding it into pool")
+            blockPool.add(block)
         }
     }
 }

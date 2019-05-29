@@ -131,9 +131,6 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
         receiver.amount += amount
         walletRepository.save(receiver)
 
-
-        // TODO : Do same thing when receive transaction
-
         log.info("Newly created transaction : $transaction")
         return transaction
     }
