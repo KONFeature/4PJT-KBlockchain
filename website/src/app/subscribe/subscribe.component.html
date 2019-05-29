@@ -21,27 +21,22 @@
             <input type="text" id="materialContactFormName" class="form-control">
             <label for="materialContactFormLastName">Name</label>
           </div>
-          <div class="md-form mt-3">
-            <input type="text" id="materialContactFormName" class="form-control">
-            <label for="materialContactFormFirstName">Prénom</label>
-          </div>
           <!-- E-mail -->
           <div class="md-form">
             <input type="email" id="materialContactFormEmail" class="form-control">
             <label for="materialContactFormEmail">E-mail</label>
           </div>
-          <div class="md-form mt-3">
-            <input type="text" id="materialContactFormName" class="form-control">
-            <label for="materialContactFormPwd">Mot de passe</label>
-          </div>
-          <div class="md-form mt-3">
-            <input type="text" id="materialContactFormName" class="form-control">
-            <label for="materialContactFormConfirmPwd">Confirmation du mot de passe</label>
-          </div>
+
           <!--Message-->
           <!-- Send button -->
-          <button class="btn btn-outline-info btn-rounded btn-block z-depth-0 my-4 waves-effect" type="submit">Send</button>
-
+          <button class="btn btn-outline-info btn-rounded btn-block z-depth-0 my-4 waves-effect" type="submit" (click)="connect()" >Send</button>
+          <p>or sign in with:</p>
+          <a type="button" data-toggle="tooltip" data-placement="right" title="Connexion avec Facebook" class="btn-floating btn-fb btn-sm btn-info text-light">
+            <i class="fab fa-facebook-f fa-2x"></i>
+          </a>
+          <a type="button" data-toggle="tooltip" data-placement="right" title="Connexion avec Google" class="btn-floating btn-git btn-sm btn-info text-light">
+            <i class="fab fa-google fa-2x"></i>
+          </a>
         </form>
 
         <!-- Form -->

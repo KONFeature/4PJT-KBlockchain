@@ -38,10 +38,15 @@ export class NavMenuComponent {
 
   constructor(private router: Router, private socialAuthService: AuthService, private http: HttpClient,
     private walletService: WalletService, private nodeService: NodeService, private transactionService: TransactionService, private blocService: BlocService) { }
-  subscribe() {
+
+    subscribe() {
     this.showSearchBar = false;
     this.router.navigate(['/subscribe']);
 
+  }
+    connect() {
+    this.showSearchBar = false;
+    this.router.navigate(['/connect']);
   }
   home() {
 
