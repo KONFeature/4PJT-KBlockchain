@@ -1,7 +1,6 @@
 package com.supbank.blockchain.controllers
 
 import com.supbank.blockchain.components.MiningComponent
-import com.supbank.blockchain.components.SocketSenderComponent
 import com.supbank.blockchain.components.WalletComponent
 import com.supbank.blockchain.models.Transaction
 import com.supbank.blockchain.models.Wallet
@@ -10,7 +9,6 @@ import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import org.slf4j.Logger
 import org.springframework.http.MediaType
-import org.springframework.util.MultiValueMap
 import org.springframework.web.bind.annotation.*
 
 /**

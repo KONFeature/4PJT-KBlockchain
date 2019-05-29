@@ -1,12 +1,14 @@
 package com.supbank.blockchain.controllers
 
 import com.supbank.blockchain.components.SocketSenderComponent
-import com.supbank.blockchain.models.Node
 import org.slf4j.Logger
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.CrossOrigin
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
 /**
- * P2p
+ * Controller for all the network infos
  */
 @RestController
 @CrossOrigin(origins = ["*"])

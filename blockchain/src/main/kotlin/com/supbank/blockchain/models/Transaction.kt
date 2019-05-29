@@ -2,9 +2,7 @@ package com.supbank.blockchain.models
 
 import com.supbank.blockchain.utils.CryptoUtil
 import com.supbank.blockchain.utils.hash
-import java.security.PrivateKey
 import java.time.Instant
-import javax.crypto.Cipher
 import javax.persistence.*
 
 @Entity

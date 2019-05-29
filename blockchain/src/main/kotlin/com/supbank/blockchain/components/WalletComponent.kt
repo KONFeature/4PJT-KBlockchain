@@ -16,6 +16,7 @@ import io.reactivex.Completable
 import io.rsocket.kotlin.Payload
 import org.slf4j.Logger
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
 @Component
@@ -122,6 +123,14 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
         // Send the transaction to other node
         socketSender.broadcastFf(PublishTransactionPayload(transaction).get())
 
+        // Refresh wallet amount
+        wallet?.let {
+            it.amount -= amount
+            walletRepository.save(it)
+        }
+        receiver.amount += amount
+        walletRepository.save(receiver)
+
         log.info("Newly created transaction : $transaction")
         return transaction
     }
@@ -150,10 +159,22 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
      */
     fun receivedTransaction(payload: Payload) : Completable {
         return try {
+            // Save the transaction
             val transaction = Gson().fromJson(payload.dataUtf8, Transaction::class.java)
             if(!transactionRepository.existsById(transaction.id)) {
                 log.info("Received a new transaction $transaction")
                 transactionRepository.save(transaction)
+
+                // Update the wallet
+                walletRepository.findByIdOrNull(transaction.senderId)?.let {
+                    it.amount -= transaction.amount
+                    walletRepository.save(it)
+                }
+                walletRepository.findByIdOrNull(transaction.receiverId)?.let {
+                    it.amount += transaction.amount
+                    walletRepository.save(it)
+                }
+
                 Completable.complete()
             } else {
                 Completable.error(P2pException.transactionKnownException(payload))

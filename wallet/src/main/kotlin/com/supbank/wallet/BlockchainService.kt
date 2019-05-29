@@ -1,16 +1,19 @@
 package com.supbank.wallet
 
+import com.supbank.wallet.dto.Block
+import com.supbank.wallet.dto.Node
 import com.supbank.wallet.dto.Transaction
 import com.supbank.wallet.dto.Wallet
-import okhttp3.Interceptor
+import io.reactivex.Flowable
+import io.reactivex.Observable
 import okhttp3.OkHttpClient
 import org.springframework.stereotype.Service
 import retrofit2.Call
 import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Query
 import javax.annotation.PostConstruct
 
@@ -41,6 +44,7 @@ class BlockchainService {
         val retrofit = Retrofit.Builder()
                 .baseUrl("http://$url:$port/")
                 .addConverterFactory(GsonConverterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .client(client)
                 .build()
 
@@ -51,19 +55,31 @@ class BlockchainService {
 interface Repository {
 
     @GET("wallet/create")
-    fun createWallet(@Query("name") name: String) : Call<Wallet>
+    fun createWallet(@Query("name") name: String) : Observable<Wallet>
 
     @GET("wallet/load")
-    fun loadWallet() : Call<Wallet>
+    fun loadWallet() : Observable<Wallet>
 
     @GET("wallet/status")
-    fun getWallet() : Call<Wallet>
+    fun getWallet() : Observable<Wallet>
 
     @GET("wallet/publish")
     fun publishTransaction(@Query(value = "message", encoded = true) msg: String,
                            @Query(value = "amount") amount: Int,
-                           @Query(value = "receiver") receiverId: Long) : Call<Transaction>
+                           @Query(value = "receiver") receiverId: Long) : Observable<Transaction>
 
     @GET("wallet/miner")
-    fun mining(@Query(value = "status") status: Boolean) : Call<Boolean>
+    fun mining(@Query(value = "status") status: Boolean) : Observable<Boolean>
+
+    @POST("blockchain/wallets")
+    fun listWallets() : Flowable<List<Wallet>>
+
+    @POST("blockchain/pool")
+    fun listTransactionsInPool() : Flowable<List<Transaction>>
+
+    @POST("blockchain/blocks")
+    fun listBlocks() : Flowable<List<Block>>
+
+    @GET("network/nodes")
+    fun nodes() : Observable<List<Node>>
 }
