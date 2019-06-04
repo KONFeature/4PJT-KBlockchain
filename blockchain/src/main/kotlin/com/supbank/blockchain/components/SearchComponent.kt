@@ -12,7 +12,6 @@ import io.reactivex.Flowable
 import org.slf4j.Logger
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
-import java.security.PublicKey
 
 @Component
 class SearchComponent(private val transactionRepository: TransactionRepository,

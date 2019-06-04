@@ -13,4 +13,6 @@ interface WalletRepository: CrudRepository<Wallet, Long> {
     fun findByPubKeyLike(pubKey: PublicKey) : Wallet?
 
     fun findAllByNameLikeOrMailLike(name: String, mail: String) : List<Wallet>
+
+    fun findAllByMail(mail: String) : List<Wallet>
 }

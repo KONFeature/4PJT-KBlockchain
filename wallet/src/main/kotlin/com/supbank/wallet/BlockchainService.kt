@@ -8,7 +8,6 @@ import io.reactivex.Flowable
 import io.reactivex.Observable
 import okhttp3.OkHttpClient
 import org.springframework.stereotype.Service
-import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -58,7 +57,7 @@ interface Repository {
     fun createWallet(@Query("name") name: String) : Observable<Wallet>
 
     @GET("wallet/load")
-    fun loadWallet() : Observable<Wallet>
+    fun loadWallet(@Query(value = "identifier") identifier: String) : Observable<Wallet>
 
     @GET("wallet/status")
     fun getWallet() : Observable<Wallet>

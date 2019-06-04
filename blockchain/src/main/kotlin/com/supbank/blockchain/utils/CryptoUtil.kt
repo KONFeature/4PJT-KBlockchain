@@ -1,94 +1,69 @@
 package com.supbank.blockchain.utils
 
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.io.IOException
+import sun.security.tools.keytool.CertAndKeyGen
+import sun.security.x509.X500Name
 import java.nio.charset.StandardCharsets
-import java.security.*
-import java.security.spec.PKCS8EncodedKeySpec
+import java.security.KeyFactory
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.Signature
+import java.security.cert.Certificate
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
+import java.util.concurrent.ThreadLocalRandom
 import javax.crypto.Cipher
 
 object CryptoUtil {
 
     // Const
+    const val CRYPTO_PROVIDER = "SupBankBlockchain"
     const val CRYPTO_ALGORITHM = "RSA"
+    const val CRYPTO_METHOD = "SHA256WithRSA"
     const val CRYPTO_BITS = 2048
     const val CRYPTO_TRANSFORM = "RSA/ECB/OAEPWithSHA1AndMGF1Padding"
+    const val CERT_VALIDITY = 5.toLong() * 365 * 24 * 60 * 60
+    val CERT_NAME = X500Name("CN=$CRYPTO_PROVIDER, O=$CRYPTO_PROVIDER, L=Nantes, C=FR")
+
     const val PUB_KEY_NAME = "pub.key"
     const val PRIV_KEY_NAME = "priv.key"
 
     // Factory and cipher
     private val factory = KeyFactory.getInstance(CRYPTO_ALGORITHM)
-    private val generator = KeyPairGenerator.getInstance(CRYPTO_ALGORITHM)
     private val cipher = Cipher.getInstance(CRYPTO_TRANSFORM)
 
     // Logger
     private val log = LoggerFactory.getLogger(this::class.java)
 
     /**
-     * Function used to create a key pair
+     * Function used to create a certificate
      */
-    fun createKeyPair(path: String) : KeyPair? {
-        log.debug("Generating keypair to path {}", path)
+    fun createKeyPair() : CertAndKeyGen {
+        log.debug("Generating keypair using Cert and KeyGen")
+        val certGen = CertAndKeyGen(CRYPTO_ALGORITHM, CRYPTO_METHOD, CRYPTO_PROVIDER)
+        certGen.generate(CRYPTO_BITS)
 
-        // Generate the keypair
-        generator.initialize(CRYPTO_BITS)
-        val keypair = generator.genKeyPair()
-
-        // Store the keypair to the specified path
-        try {
-            val pubFile = File(path, PUB_KEY_NAME)
-            val privFile = File(path, PRIV_KEY_NAME)
-
-            // Check the folder tree
-            if(!pubFile.parentFile.exists())
-                pubFile.parentFile.mkdirs()
-            if(!privFile.parentFile.exists())
-                privFile.parentFile.mkdirs()
-
-            log.debug("Public key file path {}, private key file path {}", pubFile.absolutePath, privFile.absolutePath)
-
-            pubFile.writeBytes(keypair.public.encoded)
-            privFile.writeBytes(keypair.private.encoded)
-
-            log.debug("Successfully generated keypair")
-
-            return keypair
-        } catch(e: IOException) {
-            // Error
-            log.warn("Error during keypair generation {}", e.message)
-            return null
-        }
+        return certGen
     }
 
     /**
-     * Function used to lod local keypair
+     * Function used to check that the private key match the public certificate
      */
-    fun loadKeyPair(path: String) : KeyPair? {
-        log.debug("Loading keypair from path {} ", path)
+    fun checkKeyPair(privateKey: PrivateKey, publicCert: Certificate) : Boolean {
+        val challenge = ByteArray(1000)
+        ThreadLocalRandom.current().nextBytes(challenge)
 
-        // Find the file and load them
-        try {
-            val pubFile = File(path, PUB_KEY_NAME)
-            val privFile = File(path, PRIV_KEY_NAME)
+        // Sign the challenge with the private key
+        val sig = Signature.getInstance(CRYPTO_METHOD)
+        sig.initSign(privateKey)
+        sig.update(challenge)
+        val signature = sig.sign()
 
-            log.debug("Public key file path {}, private key file path {}", pubFile.absolutePath, privFile.absolutePath)
+        // Verify with the public key
+        sig.initVerify(publicCert)
+        sig.update(challenge)
 
-            val pubSpec = X509EncodedKeySpec(pubFile.readBytes())
-            val pubKey = factory.generatePublic(pubSpec)
-            val privSpec = PKCS8EncodedKeySpec(privFile.readBytes())
-            val privKey = factory.generatePrivate(privSpec)
-
-            log.debug("Successfully retreived keypair")
-
-            return KeyPair(pubKey, privKey)
-        } catch(e: IOException) {
-            // Error
-            log.warn("Error during keypair generation {}", e.message)
-            return null
-        }
+        return sig.verify(signature)
     }
 
     /**
@@ -114,6 +89,4 @@ object CryptoUtil {
         cipher.init(Cipher.DECRYPT_MODE, key)
         return String(cipher.doFinal(Base64.getDecoder().decode(msg)), StandardCharsets.UTF_8)
     }
-
-
 }

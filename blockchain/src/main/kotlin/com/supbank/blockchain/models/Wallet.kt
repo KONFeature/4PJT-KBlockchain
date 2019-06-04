@@ -16,7 +16,7 @@ import javax.persistence.*
 @Entity
 data class Wallet(
         @Expose
-        @Column(nullable = false)
+        @Column(nullable = false, unique = true)
         val name: String,
 
         @Expose
@@ -41,7 +41,7 @@ data class Wallet(
     @Column(nullable = false)
     var amount: Long = 0L
 
-    @Column
+    @Column()
     var mail: String? = null
 
     @Column

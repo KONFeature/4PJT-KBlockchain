@@ -1,5 +1,6 @@
 package com.supbank.blockchain.models
 
+import com.google.gson.annotations.Expose
 import com.supbank.blockchain.utils.CryptoUtil
 import com.supbank.blockchain.utils.hash
 import java.time.Instant
@@ -7,27 +8,34 @@ import javax.persistence.*
 
 @Entity
 data class Transaction(
+        @Expose
         @Column(nullable = false)
         val senderId: Long,
 
+        @Expose
         @Column(nullable = false)
         val receiverId: Long,
 
+        @Expose
         @Column(nullable = false)
         val amount: Int,
 
+        @Expose
         @Lob
         @Column
         val message: String
 )
 {
+    @Expose
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     var id: Long = 0
 
+    @Expose
     @Column
-    val timestamp: Long = Instant.now().toEpochMilli()
+    var timestamp: Long = Instant.now().toEpochMilli()
 
+    @Expose
     @Column(nullable = false)
     var mined: Boolean = false
 
@@ -42,6 +50,5 @@ data class Transaction(
                      receiver.id,
                      amount,
                      CryptoUtil.encrypt(message, receiver.pubKey))
-
     }
 }

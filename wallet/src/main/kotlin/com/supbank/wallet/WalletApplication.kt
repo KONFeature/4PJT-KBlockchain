@@ -2,8 +2,6 @@ package com.supbank.wallet
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
-import java.math.BigInteger
-import java.security.MessageDigest
 
 @SpringBootApplication
 class WalletApplication

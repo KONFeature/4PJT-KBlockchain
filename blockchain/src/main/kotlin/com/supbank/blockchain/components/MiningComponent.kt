@@ -74,7 +74,7 @@ class MiningComponent(private val transactionRepository: TransactionRepository,
 
         // Find last block
         val prevBlockHash = blockchainRepository.findAll().lastOrNull()?.hash?:"0"
-        log.info("Last block hash $prevBlockHash")
+        log.debug("Last block hash $prevBlockHash")
 
         // Create ur block
         var block = Block(prevHash = prevBlockHash, transactions = transactions)
