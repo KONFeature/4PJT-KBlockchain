@@ -1,7 +1,12 @@
 {
     "extends": "../tsconfig.json",
     "compilerOptions": {
-      "module": "commonjs"
+      "module": "commonjs",
+      "paths": {
+        "core-js/es7/reflect": [
+          "node_modules/core-js/proposals/reflect-metadata"
+        ]
+      }
     },
     "angularCompilerOptions": {
       "entryModule": "app/app.server.module#AppServerModule"

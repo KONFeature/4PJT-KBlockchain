@@ -10,21 +10,31 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse mb-3" [ngClass]='{"show": isExpanded}'>
-          <ul class="navbar-nav flex-grow">
+          <ul *ngIf="isLogged == false" class="navbar-nav flex-grow">
             <li class="nav-item" [routerLinkActive]='["link-active"]' style="margin-right:1em;" [routerLinkActiveOptions]='{ exact: true }'>
-              <button type="button" class="btn btn-info" data-toggle="modal" data-target="#exampleModal">
+              <button type="button" class="btn btn-info" data-toggle="modal" data-target="#LoginModal">
                 Connexion
               </button>
             </li>
             <li *ngIf="showSearchBar == true" class="nav-item" [routerLinkActive]='["link-active"]'>
-              <button type="button" class="btn  btn-info" (click)="subscribe()">S'inscrire</button>
+              <button type="button" class="btn  btn-info" data-toggle="modal" data-target="#RegisterModal">S'inscrire</button>
+            </li>
+          </ul>
+          <ul *ngIf="isLogged == true" class="navbar-nav flex-grow">
+            <li class="nav-item" [routerLinkActive]='["link-active"]' style="margin-right:1em;" [routerLinkActiveOptions]='{ exact: true }'>
+              <button type="button" class="btn btn-info" [routerLink]="['/wallet']">
+                Portefeuille  <span class="fas fa-wallet  text-light" id="basic-addon1"></span>
+              </button>
+            </li>
+            <li class="nav-item">
+              <button type="button" class="btn  btn-danger" (click)="logOut()" title="Déconnexion"><span class="far fa-times-circle" style="color:white"></span></button>
             </li>
           </ul>
         </div>
       </div>
     </div>
   </nav>
-  <div *ngIf="showSearchBar == true" class="row shadow-lg col mb-5" style="background-color:#00285c; padding:0px 0px 0px 0px; margin-right:0px; margin-left:0px">
+  <div  class="row shadow-lg col mb-5" style="background-color:#00285c; padding:0px 0px 0px 0px; margin-right:0px; margin-left:0px">
     <div class="col-lg-12">
       <div class="row mb-3">
         <div class="text-center col-lg-12">
@@ -35,7 +45,7 @@
         <div class="col-lg-4"></div>
         <div class="input-group mb-3 col-lg-4">
           <div class="input-group-prepend " style=" background-color:white; border-radius:2px; padding: 2px 2px 2px 2px">
-            <span class="fas fa-search-dollar fa-2x" id="basic-addon1" style="color:#1a3c69 "></span>
+            <span class="fas fa-search-dollar fa-2x" id="basic-addon1" (click)="search(searchText)" style="color:#1a3c69 "></span>
           </div>
           <input class="form-control" type="text" name="search" [(ngModel)]="searchText" autocomplete="off">
         </div>
@@ -43,37 +53,42 @@
       </div>
       <div class="row text-center">
         <div class=" col-lg-12 text-center">
-          <p class="text-light">Vous pouvez rechercher des choses comme ...Adresse,Transaction,ou Bloc</p>
+          <p class="text-light">Vous pouver rechercher des transactions en fonction de l'adresse d'un wallet (Id ou Nom), des noeuds ou de l'identifiant d'un bloc</p>
         </div>
       </div>
     </div>
 
   </div>
-  <div *ngIf="searchText != ''" class="row col-lg-12" style="background-color:white; width:100%; padding:0px; margin:0px">
+  <div *ngIf="showSearchResult == true" class="row col-lg-12" style="background-color:white; width:100%; padding:0px; margin:0px">
     <div class="col-lg-2" style="padding:0px"></div>
-    <table class="table table-striped table-light col-lg-8 shadow-lg" style="margin-top:1em; border-radius: 5px 5px;">
+    <table id="table" class="table table-striped  table-sm col-lg-8 shadow-lg" style="margin-top:0px; border-radius: 5px 5px;">
       <thead style="background-color:#00285c; border-top-left-radius: 40px 40px;">
         <tr>
-          <th scope="col" style="border-top: 0px; padding:0px; color:white">
-            <div class="row" style="margin-left:1em">
-              <span>#</span>
-            </div>
-          </th>
-          <th scope="col" style="border-top: 0px;color:white">First</th>
-          <th scope="col" style="border-top: 0px;color:white">Last</th>
+          <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px; max-width:3em;">Id</th>
+          <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Minée</th>
+          <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Message</th>
+          <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Id receveur</th>
+          <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Id lanceur</th>
+          <th class="text-center" scope="col" style="border-top: 0px;color:white; padding-bottom:0px">Timestamp</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let block of blocks | filter:searchText">
-          <td>{{block.id}}</td>
-          <td>{{block.name}}</td>
-          <td>{{block.country}}</td>
+        <tr *ngFor="let t of tableInfo | paginate: { itemsPerPage: 10, currentPage: p }">
+          <th class="text-center" scope="row">{{t.id}}</th>
+          <td class="text-center">{{t.mined}}</td>
+          <td class="text-center">{{t.message.substring(0,40)}}...</td>
+          <td class="text-center">{{t.receiverId}}</td>
+          <td class="text-center">{{t.senderId}}</td>
+          <td class="text-center">{{t.timestamp}}</td>
         </tr>
       </tbody>
+      <ul class="pagination">
+        <pagination-controls (pageChange)="p = $event"></pagination-controls>
+      </ul>
     </table>
     <div class="col-lg-2"></div>
   </div>
-  <div class="modal fade in show " id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+  <div class="modal fade in show " id="LoginModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
     <div class="modal-dialog " role="document">
       <div class="modal-content">
         <div class="card shadow-lg">
@@ -86,19 +101,14 @@
           <div class="card-body px-lg-5 pt-0" style="margin-top:20px;">
 
             <!-- Form -->
-            <form class="text-center" style="color: #757575;">
+            <form class="text-center" [formGroup]="contactForm" (ngSubmit)=" logIn()" style="color: #757575;">
 
               <!-- Email -->
-              <div class="md-form">
-                <input type="email" id="materialLoginFormEmail" class="form-control">
-                <label for="materialLoginFormEmail" style="color:#1a3c69">E-mail&nbsp;<span class="fas fa-at" id="basic-addon1" style="color:#1a3c69"></span></label>
-              </div>
-
+                <input type="email" formControlName="email" id="materialLoginFormEmail" placeholder="@" class="form-control"  required>
+                
+              <p>ou</p>
               <!-- Password -->
-              <div class="md-form">
-                <input type="password" id="materialLoginFormPassword" class="form-control">
-                <label for="materialLoginFormPassword">Mot de passe&nbsp;<span class="fas fa-key" id="basic-addon1" style="color:#1a3c69"></span></label>
-              </div>
+                <input type="text"formControlName="name" id="materialLoginFormPassword" placeholder="Nom" class="form-control">
 
               <div class="d-flex justify-content-around">
 
@@ -107,18 +117,65 @@
               <!-- Sign in button -->
               <button class="btn btn-outline-info btn-rounded btn-block my-4 waves-effect z-depth-0" type="submit">Connexion</button>
 
-              <!-- Register -->
-              <p class="text-center">
-                Pas encore membre?
-                <a class="close text-info" data-dismiss="modal" [routerLink]='["/subscribe"]' style="font-size:1em; float:none">Inscrivez-vous!</a>
-              </p>
-
               <!-- Social login -->
-              <p>or sign in with:</p>
-              <a type="button" data-toggle="tooltip" data-placement="right" title="Connexion avec Facebook" class="btn-floating btn-fb btn-sm btn-info text-light">
+              <p>ou connectez-vous avec:</p>
+              <a type="button" data-toggle="tooltip" (click)="facebookLogin()" data-placement="right" title="Connexion avec Facebook" class="btn-floating btn-fb btn-sm btn-primary text-light">
                 <i class="fab fa-facebook-f fa-2x"></i>
               </a>
-              <a type="button" data-toggle="tooltip" data-placement="right" title="Connexion avec Google" class="btn-floating btn-git btn-sm btn-info text-light">
+              <a type="button" data-toggle="tooltip"  (click)="googleLogin()" data-placement="right" title="Connexion avec Google" class="btn-floating btn-git btn-sm btn-primary text-light">
+                <i class="fab fa-google fa-2x"></i>
+              </a>
+
+            </form>
+            <!-- Form -->
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <div class="modal fade in show " id="RegisterModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog " role="document">
+      <div class="modal-content">
+        <div class="card shadow-lg">
+
+          <h5 class="card-header white-text text-center py-4" style="background-color:#f0f0f1">
+            <strong>Inscription</strong>
+          </h5>
+
+          <!--Card content-->
+          <div class="card-body px-lg-5 pt-0" style="margin-top:20px;">
+
+            <!-- Form -->
+            <form [formGroup]="registerForm" (ngSubmit)=" register()" class="text-center" style="color: #757575;">
+
+              <!-- Email -->
+
+                <input type="email" formControlName="email" id="materialLoginFormEmailRegister" class="form-control">
+                <label for="materialLoginFormEmailRegister" style="color:#1a3c69">E-mail&nbsp;<span class="fas fa-at" id="basic-addon1" style="color:#1a3c69"></span></label>
+
+              <!-- Password -->
+                <input type="text" formControlName="name" id="materialLoginFormPasswordRegister" class="form-control">
+                <label for="materialLoginFormPasswordRegister">Nom&nbsp;<span class="fas fa-key" id="basic-addon1" style="color:#1a3c69"></span></label>
+
+              <div class="d-flex justify-content-around">
+
+              </div>
+
+              <!-- Register button -->
+              <button class="btn btn-outline-info btn-rounded btn-block my-4 waves-effect z-depth-0" type="submit">Inscription</button>
+
+
+              <!-- Social login -->
+              <p>or register with:</p>
+              <a type="button" data-toggle="tooltip" (click)="facebookRegister()" data-placement="right" title="Inscription avec Facebook" class="btn-floating btn-fb btn-sm btn-primary text-light">
+                <i class="fab fa-facebook-f fa-2x"></i>
+              </a>
+              <a type="button" data-toggle="tooltip" (click)="googleRegister()" data-placement="right" title="Inscription avec Google" class="btn-floating btn-git btn-sm btn-primary text-light">
                 <i class="fab fa-google fa-2x"></i>
               </a>
 

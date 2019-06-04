@@ -12,41 +12,63 @@ import { SocialLoginModule, AuthServiceConfig } from 'angular5-social-login';
 import { FacebookLoginProvider } from 'angular5-social-login';
 import { getAuthServiceConfigs } from './socialloginConfig';
 import { WalletService } from './services/WalletService';
-import { NodeService } from './services/Nodeservice';
+import { NodeService } from './services/NodeService';
 import { TransactionService } from './services/TransactionService';
-import { BlocService } from './services/BlocService';
+import { BlockService } from './services/BlockService';
 import { Ng2SearchPipeModule } from 'ng2-search-filter';
+import { NgxPaginationModule } from 'ngx-pagination';
+import { WalletComponent } from './wallet/wallet.component';
+import { ReactiveFormsModule } from '@angular/forms';
+import { NgbModule, NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { TrasactionModalComponent } from './trasaction-modal/trasaction-modal.component';
+import { BlockModalComponent } from './block-modal/block-modal.component';
 
 @NgModule({
   declarations: [
+
     AppComponent,
     NavMenuComponent,
     HomeComponent,
     FetchDataComponent,
-    SubscribeComponent
+    SubscribeComponent,
+    WalletComponent,
+    TrasactionModalComponent,
+    BlockModalComponent
   ],
+  entryComponents: [TrasactionModalComponent, BlockModalComponent],
   imports: [
-    SocialLoginModule,  
+    NgbModule.forRoot(),   
+    SocialLoginModule, 
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     Ng2SearchPipeModule,
     HttpClientModule,
+    ReactiveFormsModule,
+     NgxPaginationModule, Ng2SearchPipeModule,  
     FormsModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
       { path: 'fetch-data', component: FetchDataComponent },
       { path: 'subscribe', component: SubscribeComponent },
-
+      { path: 'wallet', component: WalletComponent }
     ])
   ],
+  exports: [TrasactionModalComponent, BlockModalComponent],
   providers: [
+    NgbActiveModal,
     WalletService,
     NodeService,
     TransactionService,
-    BlocService,
+    BlockService,
     {
-      provide: AuthServiceConfig, useFactory: getAuthServiceConfigs
-    }
+      provide: AuthServiceConfig, useFactory: getAuthServiceConfigs,
+    },
   ],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+
+  constructor() {
+
+    localStorage.setItem('baseUrl', "http://10.17.16.208:8070/");
+  }
+}

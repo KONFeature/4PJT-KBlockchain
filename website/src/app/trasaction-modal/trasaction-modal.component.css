@@ -1,0 +1,11 @@
+thead {
+  float: left;
+}
+
+  thead th {
+    display: block;
+  }
+
+tbody {
+  float: right;
+}

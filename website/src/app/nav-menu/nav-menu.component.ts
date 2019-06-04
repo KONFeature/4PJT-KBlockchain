@@ -1,19 +1,11 @@
 
 import { Component } from '@angular/core';
 import { Router } from "@angular/router";
-import { HttpClient } from '@angular/common/http';
-import { map } from 'rxjs/operators';
-import { from } from 'rxjs';
-import { WalletService } from '../services/WalletService';
-import { NodeService } from '../services/Nodeservice';
+import { Transaction } from '../Model/Transaction';
+import { AuthenticationService } from '../services/authentication.service';
 import { TransactionService } from '../services/TransactionService';
-import { BlocService } from '../services/BlocService';
-import {
-  AuthService,
-  FacebookLoginProvider,
-  GoogleLoginProvider
-} from 'angular5-social-login';
-import { Console } from '@angular/core/src/console';
+import { Wallet } from "../Model/Wallet";
+import { FormControl, FormGroup } from '@angular/forms'
 @Component({
   selector: 'app-nav-menu',
   templateUrl: './nav-menu.component.html',
@@ -22,39 +14,91 @@ import { Console } from '@angular/core/src/console';
 export class NavMenuComponent {
   isExpanded = false;
   showSearchBar: boolean = true;
+  isLogged: boolean;
   searchText = '';
-  blocks = [
-    { id: 11, name: 'XYBDD', country: 'India' },
-    { id: 12, name: 'BNbnb', country: 'USA' },
-    { id: 13, name: 'Bombasto', country: 'UK' },
-    { id: 14, name: 'CelJjkaaeritas', country: 'Canada' },
-    { id: 15, name: 'neezhfkukf', country: 'Russia' },
-    { id: 16, name: 'Terncehfzeuf', country: 'China' },
-    { id: 17, name: 'hzfjfbhebfbef', country: 'Germany' },
-    { id: 18, name: 'hjgjyvhsdku&z', country: 'Hong Kong' },
-    { id: 19, name: 'hbzh,dayjg', country: 'South Africa' },
-    { id: 20, name: 'ppfkeofjeiafai', country: 'Sri Lanka' }
-  ];
-
-  constructor(private router: Router, private socialAuthService: AuthService, private http: HttpClient,
-    private walletService: WalletService, private nodeService: NodeService, private transactionService: TransactionService, private blocService: BlocService) { }
-  subscribe() {
-    this.showSearchBar = false;
-    this.router.navigate(['/subscribe']);
-
+  showSearchResult: boolean = false;
+  tableInfo = [];
+  private wallet: Wallet;
+  private contactForm: FormGroup;
+  private registerForm: FormGroup;
+  constructor(private router: Router, private transactionService: TransactionService, private authService: AuthenticationService) {
+    this.contactForm = this.createFormGroup()
+    this.registerForm = this.createFormGroup()
   }
-  home() {
 
-    this.nodeService.getNode().subscribe(res => console.log("test" + res));
-    this.walletService.walletLoad()
-    this.nodeService.getNode()
-    this.transactionService.getTransactionPool()
-    this.walletService.walletStatus();
-    this.transactionService.getTransactions();
-    //this.walletService.createWallet("t", "test1@test", "125672fegeg55454dege84");
-    this.showSearchBar = true;
+  public search(searchString: string) {
+    this.transactionService.search(searchString).subscribe((res: Transaction[]) => {    
+      this.tableInfo = res;
+      console.log(res);
+      this.showSearchResult = true;
+    });
+  }
+  ngOnInit() {  
+    this.wallet = JSON.parse(localStorage.getItem('currentUser'));
+    if (this.wallet == null || this.wallet == undefined) {
+      this.isLogged = false;
+    }
+    else {
+      this.isLogged = true;
+    }
+  }
+
+  createFormGroup() {
+    return new FormGroup({      
+      name: new FormControl(),
+      email: new FormControl(),
+    })
+  }
+
+  home() {
     this.router.navigate(['/'])
   }
+
+  public facebookLogin() {
+    this.authService.facebookLogin();
+    this.router.navigate(['/wallet']);
+    
+  }
+
+  public facebookRegister() {
+    this.authService.facebookRegister();
+    this.router.navigate(['/wallet']);
+    
+  }
+
+  public googleLogin() {
+    this.authService.googleLogin();
+    this.router.navigate(['/wallet']);
+   
+  }
+
+  public googleRegister() {
+    this.authService.googleRegister();
+    this.router.navigate(['/wallet']);
+    
+  }
+
+  public logOut() {
+    this.authService.logout();
+    this.ngOnInit();
+  }
+
+  public logIn() {
+    console.log(this.contactForm.value["name"]);
+    this.authService.login(this.contactForm.value["email"], this.contactForm.value["name"]);
+    
+
+    // Do useful stuff with the gathered data
+
+  }
+
+  public register() {
+    console.log(this.registerForm.value["name"]);
+    this.authService.register(this.registerForm.value["email"], this.registerForm.value["name"]);
+   
+    // Do useful stuff with the gathered data
+  }
+
   collapse() {
     this.isExpanded = false;
   }
