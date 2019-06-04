@@ -28,7 +28,7 @@ data class Transaction(
 {
     @Expose
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     @Expose

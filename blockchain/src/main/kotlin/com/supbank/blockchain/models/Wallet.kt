@@ -33,7 +33,7 @@ data class Wallet(
 {
     @Expose
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     // Amount of coin in the wallet confirmed (deduced by the block present in the chain)
@@ -41,7 +41,7 @@ data class Wallet(
     @Column(nullable = false)
     var amount: Long = 0L
 
-    @Column()
+    @Column
     var mail: String? = null
 
     @Column

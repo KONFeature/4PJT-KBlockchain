@@ -8,5 +8,5 @@ class PublishTransactionPayload(private val transaction: Transaction) : P2pPaylo
     companion object {
         const val title = "publish_transaction"
     }
-    override fun getData() = Gson().toJson(transaction)
+    override fun getData(): String = Gson().toJson(transaction)
 }

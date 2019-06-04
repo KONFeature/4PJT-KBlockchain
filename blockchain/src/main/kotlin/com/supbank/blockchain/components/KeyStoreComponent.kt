@@ -118,7 +118,7 @@ class KeyStoreComponent(private val log: Logger) {
         }
 
         // Find the priv key entry from the keystore
-        val rawPrivKey = this.keyStore.getEntry("$identifier", KeyStore.PasswordProtection(keystorePassword.toCharArray()))
+        val rawPrivKey = this.keyStore.getEntry(identifier, KeyStore.PasswordProtection(keystorePassword.toCharArray()))
         if (rawPrivKey !is KeyStore.PrivateKeyEntry) {
             log.error("The private key founded for the alias $identifier isn't a private key")
             return null

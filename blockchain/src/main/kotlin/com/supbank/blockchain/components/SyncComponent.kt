@@ -55,8 +55,6 @@ class SyncComponent(private val walletRepository: WalletRepository,
             if (walletId > syncStatus.walletLastId) {
                 log.info("Wallet behind : received id ${syncStatus.walletLastId} vs $walletId")
                 fieldsToSync[SyncField.WALLET] = syncStatus.walletLastId
-            } else {
-                log.error("$walletId vs ${syncStatus.walletLastId}")
             }
 
             // Check transaction status

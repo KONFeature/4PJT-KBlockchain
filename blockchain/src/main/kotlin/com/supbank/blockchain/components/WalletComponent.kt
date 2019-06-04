@@ -15,7 +15,6 @@ import com.supbank.blockchain.utils.p2p.wallet.UpdateWalletPayload
 import io.reactivex.Completable
 import io.rsocket.kotlin.Payload
 import org.slf4j.Logger
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
@@ -29,9 +28,6 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
     companion object {
         const val MINIG_REWARD = 10
     }
-
-    @Value("\${wallet.key.path}")
-    lateinit var keyPath: String
 
     var wallet: Wallet? = null
 

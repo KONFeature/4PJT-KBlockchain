@@ -7,5 +7,5 @@ class BlockMinedPayload(private val block: Block) : P2pPayload(title) {
     companion object {
         const val title = "block_mined"
     }
-    override fun getData() = Gson().toJson(block)
+    override fun getData(): String = Gson().toJson(block)
 }

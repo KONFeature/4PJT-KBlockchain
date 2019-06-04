@@ -8,5 +8,5 @@ class AddWalletPayload(private val wallet: Wallet) : P2pPayload(title) {
     companion object {
         const val title = "add_wallet"
     }
-    override fun getData() = GsonUtils.getWalletCustom().toJson(wallet)
+    override fun getData(): String = GsonUtils.getWalletCustom().toJson(wallet)
 }

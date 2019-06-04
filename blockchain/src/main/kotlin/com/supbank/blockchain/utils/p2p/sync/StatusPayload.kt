@@ -10,5 +10,5 @@ class StatusPayload(private val blockchainStatusPojo: BlockchainStatusPojo) : P2
     }
 
     // Data = blockchain status
-    override fun getData() = Gson().toJson(blockchainStatusPojo)
+    override fun getData(): String = Gson().toJson(blockchainStatusPojo)
 }

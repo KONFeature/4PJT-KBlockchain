@@ -147,17 +147,15 @@ class SocketSenderComponent(private val log: Logger,
 
         // Send the sync request to the client
         log.info("Send the status of the blockchain to the known nodes, see if we need a sync or not")
-        socket.let {
-            it.requestStream(StatusPayload(status).get())
-                    .doOnNext {payload ->
-                        syncComponent.receivedSyncResponse(payload)
-                    }.doOnComplete {
-                        log.info("End of the synchronization with other node")
-                    }.doOnError {
-                        log.error("Error occured during synchronization {}", it.message)
-                    }.subscribeOn(Schedulers.io())
-                    .subscribe()
-        } ?: run {
+        socket.requestStream(StatusPayload(status).get())
+                .doOnNext {payload ->
+                    syncComponent.receivedSyncResponse(payload)
+                }.doOnComplete {
+                    log.info("End of the synchronization with other node")
+                }.doOnError { error ->
+                    log.error("Error occured during synchronization {}", error.message)
+                }.subscribeOn(Schedulers.io())
+                .subscribe() ?: run {
             log.error("Error when launching the sync request, unable to find a socket available")
         }
     }

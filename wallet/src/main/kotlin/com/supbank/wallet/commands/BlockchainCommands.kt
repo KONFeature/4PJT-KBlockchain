@@ -1,6 +1,7 @@
 package com.supbank.wallet.commands
 
 import com.supbank.wallet.BlockchainService
+import com.supbank.wallet.dto.CreateTransactionRequest
 import com.supbank.wallet.print
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
@@ -43,7 +44,7 @@ class BlockchainCommands(private val blockchainService: BlockchainService) {
      */
     @ShellMethod("Création d'une transaction")
     fun transaction(receiverId: Long, amount: Int, message: String) {
-        blockchainService.repository.publishTransaction(message, amount, receiverId)
+        blockchainService.repository.publishTransaction(CreateTransactionRequest(message, amount, receiverId))
                 .subscribe({result ->
                     "Transaction crée : ${result?.toString()?:"Aucune transaction"}".print()
                 }, { error ->

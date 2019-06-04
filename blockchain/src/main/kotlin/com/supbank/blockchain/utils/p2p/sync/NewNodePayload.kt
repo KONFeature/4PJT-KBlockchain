@@ -10,5 +10,5 @@ class NewNodePayload(private val newNode: NodePojo) : P2pPayload(title) {
     }
 
     // Data = new node that join the network
-    override fun getData() = Gson().toJson(newNode)
+    override fun getData(): String = Gson().toJson(newNode)
 }

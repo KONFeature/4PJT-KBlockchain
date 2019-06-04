@@ -1,4 +1,4 @@
-package com.supbank.blockchain.pojo
+package com.supbank.blockchain.pojo.request
 
 import java.util.*
 

@@ -31,7 +31,7 @@ data class Block(
 
     @Expose
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     init {
@@ -41,7 +41,7 @@ data class Block(
     /**
      * Function used to calculate the hash of a block
      */
-    fun calculateHash(): String {
+    private fun calculateHash(): String {
         val transactionHash = transactions.joinToString { transaction -> transaction.hash() }
         return "$prevHash$transactionHash$timestamp$nonce".hash()
     }
