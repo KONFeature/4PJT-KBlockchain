@@ -1,6 +1,7 @@
 package com.supbank.wallet.commands
 
 import com.supbank.wallet.BlockchainService
+import com.supbank.wallet.dto.CreateTransactionRequest
 import com.supbank.wallet.print
 import org.springframework.shell.standard.ShellComponent
 import org.springframework.shell.standard.ShellMethod
@@ -14,16 +15,13 @@ class BlockchainCommands(private val blockchainService: BlockchainService) {
     @ShellMethod("Liste toutes les transactions pas encore minées")
     fun transactions() {
         blockchainService.repository.listTransactionsInPool()
-                .doOnNext {result ->
-                    result.forEach { "Transaction : $it".print() }
-                }
-                .doOnComplete {
-                    "Fin de la récuperation des transactions".print()
-                }
-                .doOnError { error ->
+                .subscribe({result ->
+                    result.forEach { " - Transaction : $it".print() }
+                }, { error ->
                     "Echec lors de la récuperation des transactions : ${error.message}".print()
-                }
-                .subscribe()
+                }, {
+                    "Fin de la récuperation des transactions".print()
+                })
     }
 
     /**
@@ -32,16 +30,13 @@ class BlockchainCommands(private val blockchainService: BlockchainService) {
     @ShellMethod("Liste tous les blocks de la blockchain", key = ["blockchain", "blocks"])
     fun blockchain() {
         blockchainService.repository.listBlocks()
-                .doOnNext {result ->
-                    result.forEach { "Block : $it".print() }
-                }
-                .doOnComplete {
-                    "Fin de la récuperation des blocks".print()
-                }
-                .doOnError { error ->
+                .subscribe({result ->
+                    result.forEach { " - Block : $it".print() }
+                }, { error ->
                     "Echec lors de la récuperation des blocks : ${error.message}".print()
-                }
-                .subscribe()
+                }, {
+                    "Fin de la récuperation des blocks".print()
+                })
     }
 
     /**
@@ -49,16 +44,13 @@ class BlockchainCommands(private val blockchainService: BlockchainService) {
      */
     @ShellMethod("Création d'une transaction")
     fun transaction(receiverId: Long, amount: Int, message: String) {
-        blockchainService.repository.publishTransaction(message, amount, receiverId)
-                .doOnNext {result ->
+        blockchainService.repository.publishTransaction(CreateTransactionRequest(message, amount, receiverId))
+                .subscribe({result ->
                     "Transaction crée : ${result?.toString()?:"Aucune transaction"}".print()
-                }
-                .doOnComplete {
-                    "Fin de la création de la transaction".print()
-                }
-                .doOnError { error ->
+                }, { error ->
                     "Echec lors de la création de la tansaction : ${error.message}".print()
-                }
-                .subscribe()
+                }, {
+                    "Fin de la création de la transaction".print()
+                })
     }
 }

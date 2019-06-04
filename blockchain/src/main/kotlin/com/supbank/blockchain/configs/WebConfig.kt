@@ -14,7 +14,7 @@ class WebConfig {
                 registry.addMapping("/**")
                         .allowedOrigins("*")
                         .allowedMethods("GET")
-                        .allowedMethods("PUT")
+                        .allowedMethods("POST")
             }
         }
     }

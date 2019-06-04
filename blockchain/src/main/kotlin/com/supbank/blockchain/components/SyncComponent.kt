@@ -1,6 +1,8 @@
 package com.supbank.blockchain.components
 
 import com.google.gson.Gson
+import com.google.gson.JsonArray
+import com.google.gson.JsonElement
 import com.google.gson.JsonSyntaxException
 import com.supbank.blockchain.models.Block
 import com.supbank.blockchain.models.Transaction
@@ -9,6 +11,7 @@ import com.supbank.blockchain.pojo.BlockchainStatusPojo
 import com.supbank.blockchain.repos.BlockchainRepository
 import com.supbank.blockchain.repos.TransactionRepository
 import com.supbank.blockchain.repos.WalletRepository
+import com.supbank.blockchain.utils.GsonUtils
 import com.supbank.blockchain.utils.P2pException
 import com.supbank.blockchain.utils.SyncField
 import com.supbank.blockchain.utils.p2p.sync.SyncPayload
@@ -45,7 +48,7 @@ class SyncComponent(private val walletRepository: WalletRepository,
         return try {
             log.info("Received a blockchain status, check if we need to send data or not")
             val syncStatus = Gson().fromJson(payload.dataUtf8, BlockchainStatusPojo::class.java)
-            val fieldsToSync = HashMap<SyncField, Long>()
+            val fieldsToSync = LinkedHashMap<SyncField, Long>()
 
             // Check wallet status
             val walletId = walletRepository.getTopByOrderByIdDesc()?.id ?: 0L
@@ -54,7 +57,7 @@ class SyncComponent(private val walletRepository: WalletRepository,
                 fieldsToSync[SyncField.WALLET] = syncStatus.walletLastId
             }
 
-            // Check transaction pool status
+            // Check transaction status
             val transactionId = transactionRepository.getTopByOrderByIdDesc()?.id ?: 0L
             if (transactionId > syncStatus.transactionLastId) {
                 log.info("Transaction behind : received id ${syncStatus.transactionLastId} vs $transactionId")
@@ -92,8 +95,8 @@ class SyncComponent(private val walletRepository: WalletRepository,
             // check wich data to send
             syncMap.forEach { (syncField: SyncField, id: Long) ->
                 when (syncField) {
-                    SyncField.BLOCKCHAIN -> {
-                        createSyncRespMap(syncField, blockchainRepository.findAll().filter { it.id > id })
+                    SyncField.WALLET -> {
+                        createSyncRespMap(syncField, walletRepository.findAll().filter { it.id > id })
                                 .forEach {
                                     emitter.onNext(it.get())
                                 }
@@ -104,8 +107,8 @@ class SyncComponent(private val walletRepository: WalletRepository,
                                     emitter.onNext(it.get())
                                 }
                     }
-                    SyncField.WALLET -> {
-                        createSyncRespMap(syncField, walletRepository.findAll().filter { it.id > id })
+                    SyncField.BLOCKCHAIN -> {
+                        createSyncRespMap(syncField, blockchainRepository.findAll().filter { it.id > id })
                                 .forEach {
                                     emitter.onNext(it.get())
                                 }
@@ -127,7 +130,7 @@ class SyncComponent(private val walletRepository: WalletRepository,
             // Create the data package to send when we reach the good size
             if (dataSubList.size >= SyncPayload.arraySize) {
                 val map = HashMap<SyncField, List<Any>>()
-                map.put(syncField, dataSubList)
+                map[syncField] = dataSubList
                 toSend.add(SyncPayload(map))
                 dataSubList.clear()
             }
@@ -137,7 +140,7 @@ class SyncComponent(private val walletRepository: WalletRepository,
 
         if (dataSubList.isNotEmpty()) {
             val map = HashMap<SyncField, List<Any>>()
-            map.put(syncField, dataSubList)
+            map[syncField] = dataSubList
             toSend.add(SyncPayload(map))
         }
 
@@ -149,29 +152,34 @@ class SyncComponent(private val walletRepository: WalletRepository,
      */
     fun receivedSyncResponse(payload: Payload) {
         try {
-            val syncResponse: Map<SyncField, List<Any>> = Gson().fromJson(payload.dataUtf8, SyncPayload.type)
-            log.info("Sync in progress please wait ...")
+            val syncResponse: Map<SyncField, JsonArray> = Gson().fromJson(payload.dataUtf8, SyncPayload.type)
             log.debug("Sync received data {}", syncResponse)
             syncResponse.forEach { response ->
                 when (response.key) {
-                    SyncField.BLOCKCHAIN -> {
+                    SyncField.WALLET -> {
+                        log.info("Syncing some wallets, please wait ...")
                         response.value.forEach { respVal ->
-                            if (respVal is Block) {
-                                receivedBlock(respVal)
+                            when (respVal) {
+                                is JsonElement -> walletRepository.save(GsonUtils.getWalletCustom().fromJson(respVal, Wallet::class.java))
+                                else -> log.error("Unable to parse the received wallet $respVal of type ${respVal::class.java}")
                             }
                         }
                     }
                     SyncField.TRANSACTION -> {
+                        log.info("Syncing some transactions, please wait ...")
                         response.value.forEach { respVal ->
-                            if (respVal is Transaction) {
-                                transactionRepository.save(respVal)
+                            when (respVal) {
+                                is JsonElement -> transactionRepository.save(Gson().fromJson(respVal, Transaction::class.java))
+                                else -> log.error("Unable to parse the received transaction $respVal of type ${respVal::class.java}")
                             }
                         }
                     }
-                    SyncField.WALLET -> {
+                    SyncField.BLOCKCHAIN -> {
+                        log.info("Syncing some blocks, please wait ...")
                         response.value.forEach { respVal ->
-                            if (respVal is Wallet) {
-                                walletRepository.save(respVal)
+                            when (respVal) {
+                                is JsonElement -> receivedBlock(Gson().fromJson(respVal, Block::class.java))
+                                else -> log.error("Unable to parse the received block $respVal of type ${respVal::class.java}")
                             }
                         }
                     }
@@ -190,7 +198,7 @@ class SyncComponent(private val walletRepository: WalletRepository,
 
         // Check that the block we received correspond to the last block
         if(block.prevHash == lastBlock?.hash?:"0") {
-            blockchainRepository.save(block)
+            blockchainRepository.save(rebuildBlockTransaction(block))
 
             // Explore the pool and add all the block
             var blockInPool = blockPool.firstOrNull { it.prevHash == block.hash }
@@ -203,7 +211,40 @@ class SyncComponent(private val walletRepository: WalletRepository,
             }
         } else {
             log.info("Received block previous hash doesn't correspond current last block hash, adding it into pool")
-            blockPool.add(block)
+            blockPool.add(rebuildBlockTransaction(block))
         }
+    }
+
+    /**
+     * Rebuild the transactions map of a block
+     */
+    private fun rebuildBlockTransaction(block: Block) : Block {
+        val localTransaction = ArrayList<Transaction>()
+
+        // Get only the id of the transaction id
+        val transactionsId = block.transactions.map { transaction -> transaction.id }
+
+        // foreach id, find the corresponding local transaction
+        transactionsId.forEach {transactionIdReceived ->
+            val transactionOpt = transactionRepository.findById(transactionIdReceived)
+            if(transactionOpt.isPresent) {
+                localTransaction.add(transactionOpt.get())
+                // Update local transaction
+                transactionOpt.get().mined = true
+                transactionRepository.save(transactionOpt.get())
+            } else {
+                log.warn("Unable to refresh the transaction present in the block received")
+            }
+        }
+
+        // Map the local transactions to the block
+        if(block.transactions is ArrayList<Transaction>) {
+            block.transactions.clear()
+            block.transactions.addAll(localTransaction)
+        } else {
+            log.warn("Unable to map the transactions to the received block")
+        }
+
+        return block
     }
 }

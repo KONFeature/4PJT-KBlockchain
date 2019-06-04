@@ -16,7 +16,7 @@ import javax.persistence.*
 @Entity
 data class Wallet(
         @Expose
-        @Column(nullable = false)
+        @Column(nullable = false, unique = true)
         val name: String,
 
         @Expose
@@ -33,7 +33,7 @@ data class Wallet(
 {
     @Expose
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0
 
     // Amount of coin in the wallet confirmed (deduced by the block present in the chain)

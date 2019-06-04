@@ -1,6 +1,7 @@
 package com.supbank.blockchain.controllers
 
 import com.supbank.blockchain.components.MiningComponent
+import com.supbank.blockchain.components.SearchComponent
 import com.supbank.blockchain.models.Block
 import com.supbank.blockchain.models.Transaction
 import com.supbank.blockchain.models.Wallet
@@ -21,7 +22,8 @@ import org.springframework.web.bind.annotation.*
 class BlockchainController(private val miningComponent: MiningComponent,
                            private val blockchainRepository: BlockchainRepository,
                            private val transactionRepository: TransactionRepository,
-                           private val walletRepository: WalletRepository) {
+                           private val walletRepository: WalletRepository,
+                           private val searchComponent: SearchComponent) {
 
     @GetMapping("/miner/{action}")
     fun mining(@PathVariable action: String): Boolean {
@@ -74,5 +76,10 @@ class BlockchainController(private val miningComponent: MiningComponent,
                     .forEach { emitter.onNext(it) }
             emitter.onComplete()
         }, BackpressureStrategy.BUFFER)
+    }
+
+    @GetMapping("/search")
+    fun search(@RequestParam("criteria") criteria: String) : Flowable<Transaction> {
+        return searchComponent.search(criteria)
     }
 }

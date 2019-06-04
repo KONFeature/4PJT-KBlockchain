@@ -13,5 +13,5 @@ class JoinPayload(private val localNode: NodePojo) : P2pPayload(title) {
     }
 
     // Data = current node pojo
-    override fun getData() = Gson().toJson(localNode)
+    override fun getData(): String = Gson().toJson(localNode)
 }

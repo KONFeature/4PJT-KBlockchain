@@ -1,17 +1,14 @@
 package com.supbank.wallet
 
-import com.supbank.wallet.dto.Block
-import com.supbank.wallet.dto.Node
-import com.supbank.wallet.dto.Transaction
-import com.supbank.wallet.dto.Wallet
+import com.supbank.wallet.dto.*
 import io.reactivex.Flowable
 import io.reactivex.Observable
 import okhttp3.OkHttpClient
 import org.springframework.stereotype.Service
-import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
@@ -58,15 +55,13 @@ interface Repository {
     fun createWallet(@Query("name") name: String) : Observable<Wallet>
 
     @GET("wallet/load")
-    fun loadWallet() : Observable<Wallet>
+    fun loadWallet(@Query(value = "identifier") identifier: String) : Observable<Wallet>
 
     @GET("wallet/status")
     fun getWallet() : Observable<Wallet>
 
-    @GET("wallet/publish")
-    fun publishTransaction(@Query(value = "message", encoded = true) msg: String,
-                           @Query(value = "amount") amount: Int,
-                           @Query(value = "receiver") receiverId: Long) : Observable<Transaction>
+    @POST("wallet/publish")
+    fun publishTransaction(@Body request: CreateTransactionRequest) : Observable<Transaction>
 
     @GET("wallet/miner")
     fun mining(@Query(value = "status") status: Boolean) : Observable<Boolean>

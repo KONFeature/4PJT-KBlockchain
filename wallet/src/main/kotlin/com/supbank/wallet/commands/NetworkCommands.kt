@@ -16,17 +16,12 @@ class NetworkCommands(private val blockchainService: BlockchainService) {
     @ShellMethod("Liste les noeuds du réseau")
     fun nodes() {
         blockchainService.repository.nodes()
-                .doOnNext {result ->
-                    result.forEach {
-                        "Noeud : $it".print()
-                    }
-                }
-                .doOnComplete {
-                    "Fin de la récuperation des noeuds".print()
-                }
-                .doOnError { error ->
+                .subscribe({result ->
+                    result.forEach { " - Noeud : $it".print() }
+                }, { error ->
                     "Echec lors de la recuperation des noeuds : ${error.message}".print()
-                }
-                .subscribe()
+                }, {
+                    "Fin de la récuperation des noeuds".print()
+                })
     }
 }

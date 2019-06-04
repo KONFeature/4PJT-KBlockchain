@@ -15,7 +15,6 @@ import com.supbank.blockchain.utils.p2p.wallet.UpdateWalletPayload
 import io.reactivex.Completable
 import io.rsocket.kotlin.Payload
 import org.slf4j.Logger
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Component
 
@@ -23,55 +22,56 @@ import org.springframework.stereotype.Component
 class WalletComponent (private val socketSender: SocketSenderComponent,
                        private val walletRepository: WalletRepository,
                        private val transactionRepository: TransactionRepository,
+                       private val keyStore: KeyStoreComponent,
                        private val log: Logger) {
 
     companion object {
         const val MINIG_REWARD = 10
     }
 
-    @Value("\${wallet.key.path}")
-    lateinit var keyPath: String
-
     var wallet: Wallet? = null
 
     /**
      * Function used to create a wallet
      */
-    public fun create(name: String, mail: String?, token: String?) : Wallet? {
+    fun create(name: String, mail: String?, token: String?) : Wallet? {
         // Destroy current wallet
         wallet = null
 
-        // Generate a keypair
-        CryptoUtil.createKeyPair(keyPath)?.let {keyPair ->
-            // Create the wallet from the keypair
-            log.info("Successfully created a keypair at the location {}", keyPath)
-            wallet = Wallet(name, keyPair.public, keyPair.private)
-            mail?.let { wallet?.mail = it }
-            token?.let { wallet?.token = it }
-
-            // Send the wallet to the other node
-            wallet?.let {
-                walletRepository.save(it)
-                socketSender.broadcastFf(AddWalletPayload(it).get())
-            }
-        }?:run {
-            log.error("Unable to generate keypair for the new wallet, aborting")
+        // If we have a mail, check that we don't use it for another wallet
+        if(mail != null && walletRepository.findAllByMail(mail).isNotEmpty()) {
+            log.error("Another wallet already use this address mail, aborting")
+            return null
         }
 
+        // Generate a keypair
+        val keypair = keyStore.createKeyPair(name, mail)
+        wallet = Wallet(name, keypair.public, keypair.private)
+
+        // Add the mail and the token if they exist
+        wallet?.mail = mail
+        wallet?.token = token
+
+        // Send the wallet to the other node
+        wallet?.let {
+            walletRepository.save(it)
+            socketSender.broadcastFf(AddWalletPayload(it).get())
+        }
+
+        log.info("Successfully created a new wallet $wallet")
         return wallet
     }
 
     /**
      * Function used to load a wallet
      */
-    public fun load() : Wallet? {
+    fun load(identifier: String) : Wallet? {
         // Destroy current wallet
         wallet = null
-        // store it static
 
-        // Try to find local keypair
-        CryptoUtil.loadKeyPair(keyPath)?.let { keyPair ->
-            log.info("Successfully loaded the keypair from {}", keyPath)
+        // Try to retreive the keypair from the keystore
+        keyStore.retrieveKeyPair(identifier)?.let {keyPair ->
+            log.info("Successfully retreived the keypair with the id $identifier")
 
             // Find the wallet corresponding to the public key in db
             wallet = walletRepository.getByPubKeyEquals(keyPair.public)
@@ -87,6 +87,7 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
             log.error("Unable to load keypair for ur wallet, aborting")
         }
 
+        log.info("Retrieved wallet $wallet")
         return wallet
     }
 
@@ -103,10 +104,16 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
         // Check receiver wallet
         val receiverOpt = walletRepository.findById(receiverId)
         if(!receiverOpt.isPresent) {
-            log.warn("No receiver founded with the id {}, aborting the creation of thetransaction", receiverId)
+            log.warn("No receiver founded with the id {}, aborting the creation of the transaction", receiverId)
             return null
         }
         val receiver = receiverOpt.get()
+
+        // Check that the receiver is not the sender too
+        if(receiverId == wallet?.id) {
+            log.warn("Sender cannnot be receiver too, aborting")
+            return null
+        }
 
         // Check balance
         if(wallet!!.amount < amount) {
@@ -209,5 +216,17 @@ class WalletComponent (private val socketSender: SocketSenderComponent,
             log.warn("No wallet loaded, returning an empty transaction list")
             ArrayList<Transaction>()
         }
+    }
+
+    /**
+     * Function used to decrypt a transaction message
+     */
+    fun decryptTransactionMessage(transactionId: Long) : String {
+        log.info("Decrypting the transaction $transactionId message")
+        val transaction = transactionRepository.findByIdOrNull(transactionId)
+        if(transaction != null && wallet != null && transaction.receiverId == wallet!!.id) {
+            return CryptoUtil.decrypt(transaction.message, wallet!!.privKey)
+        }
+        return "Le wallet charger ne correspond a la transaction demande"
     }
 }

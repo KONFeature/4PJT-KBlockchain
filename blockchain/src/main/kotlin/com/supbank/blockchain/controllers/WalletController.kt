@@ -4,10 +4,10 @@ import com.supbank.blockchain.components.MiningComponent
 import com.supbank.blockchain.components.WalletComponent
 import com.supbank.blockchain.models.Transaction
 import com.supbank.blockchain.models.Wallet
-import com.supbank.blockchain.pojo.CreateWalletRequest
+import com.supbank.blockchain.pojo.request.CreateTransactionRequest
+import com.supbank.blockchain.pojo.request.CreateWalletRequest
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
-import org.slf4j.Logger
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.*
 
@@ -18,8 +18,7 @@ import org.springframework.web.bind.annotation.*
 @CrossOrigin(origins = ["*"])
 @RequestMapping("/wallet")
 class WalletController(private val walletComponent: WalletComponent,
-                       private val miningComponent: MiningComponent,
-                       private val log: Logger) {
+                       private val miningComponent: MiningComponent) {
 
     @GetMapping("/create")
     fun create(@RequestParam("name") name: String) : Wallet? {
@@ -28,15 +27,16 @@ class WalletController(private val walletComponent: WalletComponent,
     }
 
     @PostMapping("/create", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun createPost(@RequestBody request: CreateWalletRequest) : Wallet? {
-        log.error("$request")
-        return walletComponent.create(request.name, request.mail, request.token)
+    fun createPost(@RequestBody(required = false) request: CreateWalletRequest) : Wallet? {
+        return walletComponent.create(request.name,
+                if(request.mail.isPresent) request.mail.get() else null,
+                if(request.token.isPresent) request.token.get() else null)
     }
 
     @GetMapping("/load")
-    fun load() : Wallet? {
+    fun load(@RequestParam("identifier") identifier: String) : Wallet? {
         // Try to load a wallet
-        return walletComponent.load()
+        return walletComponent.load(identifier)
     }
 
     @GetMapping("/status")
@@ -44,11 +44,9 @@ class WalletController(private val walletComponent: WalletComponent,
         return walletComponent.wallet
     }
 
-    @GetMapping("/publish")
-    fun publishTransaction(@RequestParam("message") msg: String,
-                           @RequestParam("amount") amount: Int,
-                           @RequestParam("receiver") receiverId: Long) : Transaction? {
-        return walletComponent.newTransaction(msg, amount, receiverId)
+    @PostMapping("/publish")
+    fun publishTransaction(@RequestBody request: CreateTransactionRequest) : Transaction? {
+        return walletComponent.newTransaction(request.message, request.amount, request.receiver)
     }
 
     @GetMapping("/miner")
@@ -66,6 +64,11 @@ class WalletController(private val walletComponent: WalletComponent,
             walletComponent.getWalletTransactions().forEach { emitter.onNext(it) }
             emitter.onComplete()
         }, BackpressureStrategy.BUFFER)
+    }
+
+    @GetMapping("/decrypt")
+    fun decrypt(@RequestParam("id") transactionId: Long) : String {
+        return walletComponent.decryptTransactionMessage(transactionId)
     }
 
 }

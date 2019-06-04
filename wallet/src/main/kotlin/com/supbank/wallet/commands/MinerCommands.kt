@@ -14,16 +14,14 @@ class MinerCommands(private val blockchainService: BlockchainService) {
     @ShellMethod("Lancement du mineur de blockchain")
     fun mine() {
         blockchainService.repository.mining(true)
-                .doOnNext {result ->
+                .subscribe({result ->
                     if(result)
                         "Lancement du mineur avec succès".print()
                     else
                         "Echec lors du lancement du mineur".print()
-                }
-                .doOnError { error ->
+                }, { error ->
                     "Echec lors du lancement du mineur : ${error.message}".print()
-                }
-                .subscribe()
+                })
     }
 
     /**
@@ -32,15 +30,13 @@ class MinerCommands(private val blockchainService: BlockchainService) {
     @ShellMethod("Fin du mineur de blockchain")
     fun stopMine() {
         blockchainService.repository.mining(false)
-                .doOnNext {result ->
+                .subscribe({result ->
                     if(result)
                         "Fin du mineur avec succès".print()
                     else
                         "Echec lors de la terminaison du mineur".print()
-                }
-                .doOnError { error ->
+                }, { error ->
                     "Echec lors de la terminaison du mineur : ${error.message}".print()
-                }
-                .subscribe()
+                })
     }
 }
