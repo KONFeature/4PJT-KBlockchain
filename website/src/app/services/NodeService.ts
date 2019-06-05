@@ -7,6 +7,6 @@ export class NodeService {
   baseUrl: string = localStorage.getItem('baseUrl');
   public getNode() {
     let header = new HttpHeaders().set("Access-Control-Allow-Origin", "*")
-    return this.http.get(this.baseUrl+"network/nodes", { headers: header });
+    return this.http.get(this.baseUrl + "/network/nodes", { headers: header });
   }
 }

@@ -9,31 +9,31 @@ export class TransactionService {
   t: transactionViewModel;
   public getTransactions() {
     let header = new HttpHeaders().set("Access-Control-Allow-Origin", "*")
-    return this.http.post(this.baseUrl+"blockchain/transactions", header)
+    return this.http.post(this.baseUrl+"/blockchain/transactions", header)
   }
   public getTransactionPool() {
     let header = new HttpHeaders().set("Access-Control-Allow-Origin", "*")
-    return this.http.post(this.baseUrl+"blockchain/pool", null).subscribe({
+    return this.http.post(this.baseUrl+"/blockchain/pool", null).subscribe({
       next(response) { console.log(response); },
 
     });
   }
   public search(searchString: string) {
     let params = new HttpParams().set("criteria", searchString)
-    return this.http.get(this.baseUrl + "blockchain/search", { params: params });
+    return this.http.get(this.baseUrl + "/blockchain/search", { params: params });
   }
 
   public sendTransaction(receiverId: number, amount: number, message: string) {
     this.t = new transactionViewModel;
     this.t.amount = amount;
     this.t.receiver = receiverId;
-    this.t.message = message;    
-    return this.http.post(this.baseUrl + "wallet/publish", this.t);
+    this.t.message = message;
+    return this.http.post(this.baseUrl + "/wallet/publish", this.t);
   }
 
   public decryptTransaction(id: number) {
     let params = new HttpParams()
       .set("id", id.toString());
-    return this.http.get(this.baseUrl + "wallet/decrypt", { params: params, responseType: 'text' });
+    return this.http.get(this.baseUrl + "/wallet/decrypt", { params: params, responseType: 'text' });
   }
 }

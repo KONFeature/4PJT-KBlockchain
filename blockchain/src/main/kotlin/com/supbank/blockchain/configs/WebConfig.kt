@@ -53,6 +53,7 @@ class WebConfig {
     fun webAppRouter(@Value("classpath:/static/index.html") html: Resource): RouterFunction<ServerResponse> {
         return router {
             GET("/") { request -> ServerResponse.ok().contentType(MediaType.TEXT_HTML).syncBody(html) }
+            GET("/wallet") { request -> ServerResponse.ok().contentType(MediaType.TEXT_HTML).syncBody(html) }
             resources("/*.js", ClassPathResource("static/"))
             resources("/*.css", ClassPathResource("static/"))
         }

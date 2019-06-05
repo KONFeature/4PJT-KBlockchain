@@ -40,6 +40,9 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
     @Value("\${p2p.port}")
     var serverPort: Int = 0
 
+    @Value("\${server.port}")
+    var webserverPort: Int = 0
+
     /**
      * Init the server
      */
@@ -53,6 +56,7 @@ class SocketReceiverComponent(private val socketSender: SocketSenderComponent,
                 .observeOn(Schedulers.io())
                 .subscribe({ context ->
                     log.info("Server running on address {}", context.address())
+                    log.info("Vous pouvez accedez a la webapp via 'localhost:$webserverPort'")
                     server = context
                 }, { error ->
                     log.warn("Error when launching the socket server {}", error)

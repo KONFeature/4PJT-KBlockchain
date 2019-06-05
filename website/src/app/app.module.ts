@@ -37,13 +37,13 @@ import { BlockModalComponent } from './block-modal/block-modal.component';
   ],
   entryComponents: [TrasactionModalComponent, BlockModalComponent],
   imports: [
-    NgbModule.forRoot(),   
-    SocialLoginModule, 
+    NgbModule.forRoot(),
+    SocialLoginModule,
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     Ng2SearchPipeModule,
     HttpClientModule,
     ReactiveFormsModule,
-     NgxPaginationModule, Ng2SearchPipeModule,  
+     NgxPaginationModule, Ng2SearchPipeModule,
     FormsModule,
     RouterModule.forRoot([
       { path: '', component: HomeComponent, pathMatch: 'full' },
@@ -68,7 +68,6 @@ import { BlockModalComponent } from './block-modal/block-modal.component';
 export class AppModule {
 
   constructor() {
-
-    localStorage.setItem('baseUrl', "http://10.17.16.208:8070/");
+    localStorage.setItem('baseUrl', "");
   }
 }

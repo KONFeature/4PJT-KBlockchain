@@ -266,7 +266,7 @@ var __metadata = (undefined && undefined.__metadata) || function (k, v) {
 
 var AppModule = /** @class */ (function () {
     function AppModule() {
-        localStorage.setItem('baseUrl', "http://10.17.16.208:8070/");
+        localStorage.setItem('baseUrl', "");
     }
     AppModule = __decorate([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["NgModule"])({
@@ -738,11 +738,11 @@ var BlockService = /** @class */ (function () {
     }
     BlockService.prototype.getBlock = function () {
         var header = new _angular_common_http__WEBPACK_IMPORTED_MODULE_0__["HttpHeaders"]().set("Access-Control-Allow-Origin", "*");
-        return this.http.post(this.baseUrl + "blockchain/blocks", header);
+        return this.http.post(this.baseUrl + "/blockchain/blocks", header);
     };
     BlockService.prototype.getBlockDetail = function (id) {
         var params = new _angular_common_http__WEBPACK_IMPORTED_MODULE_0__["HttpParams"]().set("id", id.toString());
-        return this.http.post(this.baseUrl + "blockchain/block?id=" + id, null);
+        return this.http.post(this.baseUrl + "/blockchain/block?id=" + id, null);
     };
     BlockService = __decorate([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"])(),
@@ -785,7 +785,7 @@ var NodeService = /** @class */ (function () {
     }
     NodeService.prototype.getNode = function () {
         var header = new _angular_common_http__WEBPACK_IMPORTED_MODULE_0__["HttpHeaders"]().set("Access-Control-Allow-Origin", "*");
-        return this.http.get(this.baseUrl + "network/nodes", { headers: header });
+        return this.http.get(this.baseUrl + "/network/nodes", { headers: header });
     };
     NodeService = __decorate([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"])(),
@@ -830,29 +830,29 @@ var TransactionService = /** @class */ (function () {
     }
     TransactionService.prototype.getTransactions = function () {
         var header = new _angular_common_http__WEBPACK_IMPORTED_MODULE_0__["HttpHeaders"]().set("Access-Control-Allow-Origin", "*");
-        return this.http.post(this.baseUrl + "blockchain/transactions", header);
+        return this.http.post(this.baseUrl + "/blockchain/transactions", header);
     };
     TransactionService.prototype.getTransactionPool = function () {
         var header = new _angular_common_http__WEBPACK_IMPORTED_MODULE_0__["HttpHeaders"]().set("Access-Control-Allow-Origin", "*");
-        return this.http.post(this.baseUrl + "blockchain/pool", null).subscribe({
+        return this.http.post(this.baseUrl + "/blockchain/pool", null).subscribe({
             next: function (response) { console.log(response); },
         });
     };
     TransactionService.prototype.search = function (searchString) {
         var params = new _angular_common_http__WEBPACK_IMPORTED_MODULE_0__["HttpParams"]().set("criteria", searchString);
-        return this.http.get(this.baseUrl + "blockchain/search", { params: params });
+        return this.http.get(this.baseUrl + "/blockchain/search", { params: params });
     };
     TransactionService.prototype.sendTransaction = function (receiverId, amount, message) {
         this.t = new _Model_transactionViewModel__WEBPACK_IMPORTED_MODULE_2__["transactionViewModel"];
         this.t.amount = amount;
         this.t.receiver = receiverId;
         this.t.message = message;
-        return this.http.post(this.baseUrl + "wallet/publish", this.t);
+        return this.http.post(this.baseUrl + "/wallet/publish", this.t);
     };
     TransactionService.prototype.decryptTransaction = function (id) {
         var params = new _angular_common_http__WEBPACK_IMPORTED_MODULE_0__["HttpParams"]()
             .set("id", id.toString());
-        return this.http.get(this.baseUrl + "wallet/decrypt", { params: params, responseType: 'text' });
+        return this.http.get(this.baseUrl + "/wallet/decrypt", { params: params, responseType: 'text' });
     };
     TransactionService = __decorate([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"])(),
@@ -901,23 +901,23 @@ var WalletService = /** @class */ (function () {
         user.mail = mail;
         user.token = token;
         //let params = new HttpParams().set("name", name).set("mail", mail).set("token", token)
-        return this.http.post(this.baseUrl + "wallet/create", user);
+        return this.http.post(this.baseUrl + "/wallet/create", user);
     };
     WalletService.prototype.walletLoad = function (identifier) {
         var params = new _angular_common_http__WEBPACK_IMPORTED_MODULE_0__["HttpParams"]().set("identifier", identifier);
-        return this.http.get(this.baseUrl + "wallet/load", { params: params });
+        return this.http.get(this.baseUrl + "/wallet/load", { params: params });
     };
     WalletService.prototype.walletStatus = function () {
-        return this.http.get(this.baseUrl + "wallet/status");
+        return this.http.get(this.baseUrl + "/wallet/status");
     };
     WalletService.prototype.walletCount = function () {
-        return this.http.post(this.baseUrl + "blockchain/wallets", null);
+        return this.http.post(this.baseUrl + "/blockchain/wallets", null);
     };
     WalletService.prototype.walletTransaction = function () {
-        return this.http.get(this.baseUrl + "wallet/transactions");
+        return this.http.get(this.baseUrl + "/wallet/transactions");
     };
     WalletService.prototype.walletDecrypt = function (id) {
-        return this.http.post(this.baseUrl + "wallet/decrypt", id);
+        return this.http.post(this.baseUrl + "/wallet/decrypt", id);
     };
     WalletService = __decorate([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"])(),
