@@ -38,6 +38,7 @@ class WebConfig {
             GET("/wallet") { request -> ServerResponse.ok().contentType(MediaType.TEXT_HTML).syncBody(html) }
             resources("/*.js", ClassPathResource("static/"))
             resources("/*.css", ClassPathResource("static/"))
+            resources("/assets/*.png", ClassPathResource("static/assets/"))
         }
     }
 }
